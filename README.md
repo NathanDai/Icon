@@ -6,11 +6,11 @@
 
 以下是当前仓库中存放的图标文件：
 
-| 图标文件 | 预览 | 文件大小 | 说明 |
-| :--- | :---: | :---: | :--- |
-| `air_icon.png` | ![air_icon](air_icon.png) | 276.4 KB | 空调/航线等相关图标 |
-| `mini1_icon.png` | ![mini1_icon](mini1_icon.png) | 274.2 KB | Mini 版本图标 1 |
-| `mini2_icon.png` | ![mini2_icon](mini2_icon.png) | 279.3 KB | Mini 版本图标 2 |
+| 图标文件 | 预览 | 在线直链 | 说明 |
+| :--- | :---: | :--- | :--- |
+| `air_icon.png` | ![air_icon](air_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/air_icon.png` | MacBook Air (m1) 图标 |
+| `mini1_icon.png` | ![mini1_icon](mini1_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/mini1_icon.png` | Mac Mini (m1) 图标 |
+| `mini2_icon.png` | ![mini2_icon](mini2_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/mini2_icon.png` | Mac Mini (m2) 图标 |
 
 ## 使用说明
 
