@@ -11,6 +11,8 @@
 | `air_icon.png` | ![air_icon](air_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/air_icon.png` | MacBook Air (m1) 图标 |
 | `mini1_icon.png` | ![mini1_icon](mini1_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/mini1_icon.png` | Mac Mini (m1) 图标 |
 | `mini2_icon.png` | ![mini2_icon](mini2_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/mini2_icon.png` | Mac Mini (m2) 图标 |
+| `finch1_icon.png` | ![finch1_icon](finch1_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch1_icon.png` | Finch 头像 1 |
+| `finch2_icon.png` | ![finch2_icon](finch2_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_icon.png` | Finch 头像 2 |
 
 ## 使用说明
 
