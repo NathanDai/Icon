@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quantumult Icon Assets"
+  short_description: "Create crisp Quantumult-ready PNG icons"
+  default_prompt: "Use $quantumult-icon-assets to add a crisp 144x144 Quantumult icon asset to this repository."
