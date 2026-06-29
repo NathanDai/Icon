@@ -13,6 +13,8 @@
 | `mini2_icon.png` | ![mini2_icon](mini2_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/mini2_icon.png` | Mac Mini (m2) 图标 |
 | `finch1_icon.png` | ![finch1_icon](finch1_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch1_icon.png` | Finch 头像 1 |
 | `finch2_icon.png` | ![finch2_icon](finch2_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_icon.png` | Finch 头像 2 |
+| `anthropic.png` | ![anthropic](anthropic.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/anthropic.png` | Anthropic 图标 |
+| `openai.png` | ![openai](openai.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/openai.png` | OpenAI 图标 |
 
 ## 使用说明
 
