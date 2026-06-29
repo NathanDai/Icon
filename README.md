@@ -15,6 +15,14 @@
 | `finch2_icon.png` | ![finch2_icon](finch2_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_icon.png` | Finch 头像 2 |
 | `quantumult/anthropic.png` | ![anthropic](quantumult/anthropic.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/anthropic.png` | Anthropic 图标 |
 | `quantumult/openai.png` | ![openai](quantumult/openai.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/openai.png` | OpenAI 图标 |
+| `quantumult/domestic.png` | ![domestic](quantumult/domestic.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/domestic.png` | Domestic 图标 |
+| `quantumult/asiantv.png` | ![asiantv](quantumult/asiantv.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/asiantv.png` | AsianTV 图标 |
+| `quantumult/global.png` | ![global](quantumult/global.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/global.png` | Global 图标 |
+| `quantumult/globaltv.png` | ![globaltv](quantumult/globaltv.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/globaltv.png` | GlobalTV 图标 |
+| `quantumult/final.png` | ![final](quantumult/final.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/final.png` | Final 图标 |
+| `quantumult/home2.png` | ![home2](quantumult/home2.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/home2.png` | HOME2 回家图标 |
+| `quantumult/home3.png` | ![home3](quantumult/home3.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/home3.png` | HOME3 回家图标 |
+| `quantumult/home4.png` | ![home4](quantumult/home4.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/home4.png` | HOME4 回家图标 |
 
 ## 使用说明
 
