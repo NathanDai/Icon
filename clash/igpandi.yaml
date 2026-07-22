@@ -13,6 +13,8 @@
 #   - RULE-SET,igpandi,IGPANDI # 匹配到的域名走 IGPANDI 节点组
 
 payload:
+  - DOMAIN-SUFFIX,ip.sb
+
   # IGP&I 官方主域
   - DOMAIN-SUFFIX,igpandi.org
 
