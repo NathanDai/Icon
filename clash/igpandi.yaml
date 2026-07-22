@@ -1,0 +1,54 @@
+# Clash Rule-Provider: IGPANDI & P&I 俱乐部规则集
+# 直链地址: https://raw.githubusercontent.com/NathanDai/Icon/main/clash/igpandi.yaml
+#
+# Clash 配置引用示例:
+# rule-providers:
+#   igpandi:
+#     type: http
+#     behavior: classical
+#     url: "https://raw.githubusercontent.com/NathanDai/Icon/main/clash/igpandi.yaml"
+#     interval: 86400
+#     path: ./ruleset/igpandi.yaml
+# rules:
+#   - RULE-SET,igpandi,IGPANDI # 匹配到的域名走 IGPANDI 节点组
+
+payload:
+  # L1 + reCAPTCHA
+  - DOMAIN-SUFFIX,igpandi.org
+  - DOMAIN-SUFFIX,google.com
+  - DOMAIN-SUFFIX,gstatic.com
+  - DOMAIN-SUFFIX,recaptcha.net
+  - DOMAIN-SUFFIX,googletagmanager.com
+
+  # P&I 12 家 + 别名/旧域
+  - DOMAIN-SUFFIX,piclub.or.jp
+  - DOMAIN-SUFFIX,gard.no
+  - DOMAIN-SUFFIX,westpandi.com
+  - DOMAIN-SUFFIX,britanniapandi.com
+  - DOMAIN-SUFFIX,american-club.com
+  - DOMAIN-SUFFIX,americanclub.com
+  - DOMAIN-SUFFIX,steamshipmutual.com
+  - DOMAIN-SUFFIX,north-standard.com
+  - DOMAIN-SUFFIX,northstandard.com
+  - DOMAIN-SUFFIX,standard-club.com
+  - DOMAIN-SUFFIX,nepia.com
+  - DOMAIN-SUFFIX,londonpandi.com
+  - DOMAIN-SUFFIX,skuld.com
+  - DOMAIN-SUFFIX,swedishclub.com
+  - DOMAIN-SUFFIX,ukpandi.com
+  - DOMAIN-SUFFIX,thomasmiller.com
+  - DOMAIN-SUFFIX,shipownersclub.com
+
+  # CF / CDN / 验证码与 Cookie 同意弹窗附属
+  - DOMAIN-SUFFIX,cloudflare.com
+  - DOMAIN-SUFFIX,cloudflareinsights.com
+  - DOMAIN-SUFFIX,cdn.jsdelivr.net
+  - DOMAIN-SUFFIX,code.jquery.com
+  - DOMAIN-SUFFIX,fonts.googleapis.com
+  - DOMAIN-SUFFIX,fonts.gstatic.com
+  - DOMAIN-SUFFIX,seersco.com
+  - DOMAIN-SUFFIX,hcaptcha.com
+  - DOMAIN-SUFFIX,cookielaw.org
+  - DOMAIN-SUFFIX,cookiebot.com
+  - DOMAIN-SUFFIX,onetrust.com
+

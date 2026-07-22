@@ -5,6 +5,7 @@
 ## 规则文件列表
 
 - [`rules.yaml`](rules.yaml): Clash 自定义规则样例文件 (behavior: classical)
+- [`igpandi.yaml`](igpandi.yaml): IGPANDI 及 P&I 俱乐部与 CDN 相关规则集 (behavior: classical)
 
 ## Clash 配置引用示例
 

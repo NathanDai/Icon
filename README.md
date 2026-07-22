@@ -32,6 +32,7 @@
 | 规则文件 | 说明 | 在线直链 |
 | :--- | :--- | :--- |
 | `clash/rules.yaml` | Clash 自定义规则集样例 | `https://raw.githubusercontent.com/NathanDai/Icon/main/clash/rules.yaml` |
+| `clash/igpandi.yaml` | IGPANDI & P&I 俱乐部与 CDN 相关规则集 | `https://raw.githubusercontent.com/NathanDai/Icon/main/clash/igpandi.yaml` |
 
 ## 使用说明
 
