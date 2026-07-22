@@ -13,14 +13,10 @@
 #   - RULE-SET,igpandi,IGPANDI # 匹配到的域名走 IGPANDI 节点组
 
 payload:
-  # L1 + reCAPTCHA
+  # IGP&I 官方主域
   - DOMAIN-SUFFIX,igpandi.org
-  - DOMAIN-SUFFIX,google.com
-  - DOMAIN-SUFFIX,gstatic.com
-  - DOMAIN-SUFFIX,recaptcha.net
-  - DOMAIN-SUFFIX,googletagmanager.com
 
-  # P&I 12 家 + 别名/旧域
+  # P&I 12 家成员协会主域及别名/历史域名
   - DOMAIN-SUFFIX,piclub.or.jp
   - DOMAIN-SUFFIX,gard.no
   - DOMAIN-SUFFIX,westpandi.com
@@ -38,17 +34,3 @@ payload:
   - DOMAIN-SUFFIX,ukpandi.com
   - DOMAIN-SUFFIX,thomasmiller.com
   - DOMAIN-SUFFIX,shipownersclub.com
-
-  # CF / CDN / 验证码与 Cookie 同意弹窗附属
-  - DOMAIN-SUFFIX,cloudflare.com
-  - DOMAIN-SUFFIX,cloudflareinsights.com
-  - DOMAIN-SUFFIX,cdn.jsdelivr.net
-  - DOMAIN-SUFFIX,code.jquery.com
-  - DOMAIN-SUFFIX,fonts.googleapis.com
-  - DOMAIN-SUFFIX,fonts.gstatic.com
-  - DOMAIN-SUFFIX,seersco.com
-  - DOMAIN-SUFFIX,hcaptcha.com
-  - DOMAIN-SUFFIX,cookielaw.org
-  - DOMAIN-SUFFIX,cookiebot.com
-  - DOMAIN-SUFFIX,onetrust.com
-
