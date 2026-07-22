@@ -1,0 +1,10 @@
+# Clash Rule-Provider 规则文件
+# Behavior: classical (支持 DOMAIN-SUFFIX, DOMAIN-KEYWORD, DOMAIN, IP-CIDR 等)
+# 在线直链: https://raw.githubusercontent.com/NathanDai/Icon/main/clash/rules.yaml
+
+payload:
+  # 示例规则：
+  # - DOMAIN-SUFFIX,example.com
+  # - DOMAIN-KEYWORD,example
+  # - DOMAIN,example.org
+  # - IP-CIDR,192.168.1.0/24

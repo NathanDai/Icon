@@ -25,8 +25,18 @@
 | `quantumult/home3.png` | ![home3](quantumult/home3.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/home3.png` | HOME3 回家图标 |
 | `quantumult/home4.png` | ![home4](quantumult/home4.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/quantumult/home4.png` | HOME4 回家图标 |
 
+## Clash 规则文件
+
+在 [`clash/`](clash/README.md) 目录下存放 Clash (Rule-Provider) 规则文件。
+
+| 规则文件 | 说明 | 在线直链 |
+| :--- | :--- | :--- |
+| `clash/rules.yaml` | Clash 自定义规则集样例 | `https://raw.githubusercontent.com/NathanDai/Icon/main/clash/rules.yaml` |
+
 ## 使用说明
 
 1. **新增图标**：将新图标文件放入本目录后，建议在此 `README.md` 中更新列表及预览。
-2. **命名规范**：推荐使用小写字母、数字和下划线组合，例如 `custom_icon.png`。
-3. **格式建议**：优先使用 `PNG`（透明背景）或 `SVG` 格式。
+2. **Clash 规则**：在 `clash/` 目录下添加 YAML 格式规则文件，可在 Clash 配置中以 `rule-providers` 方式进行引用。
+3. **命名规范**：推荐使用小写字母、数字和下划线组合，例如 `custom_icon.png` 或 `custom_rules.yaml`。
+4. **格式建议**：图标优先使用 `PNG`（透明背景）或 `SVG` 格式；规则使用 `YAML` 格式。
+
