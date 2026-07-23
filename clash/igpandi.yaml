@@ -36,3 +36,6 @@ payload:
   - DOMAIN-SUFFIX,ukpandi.com
   - DOMAIN-SUFFIX,thomasmiller.com
   - DOMAIN-SUFFIX,shipownersclub.com
+
+  # vesselfinder
+  - DOMAIN-SUFFIX,vesselfinder.com
