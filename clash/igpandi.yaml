@@ -39,3 +39,6 @@ payload:
 
   # vesselfinder
   - DOMAIN-SUFFIX,vesselfinder.com
+
+  # iomou
+  - DOMAIN-SUFFIX,iomou.org
