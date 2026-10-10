@@ -15,9 +15,9 @@ silently breaks. This fails loudly instead — deterministically, offline (help
 is local; no auth/network), no LLM.
 
 Usage:
-    python3 evals/lint_agy_commands.py              # lint the sibling skill
-    python3 evals/lint_agy_commands.py --skill DIR
-    python3 evals/lint_agy_commands.py --verbose
+    conda run -n py312 python evals/lint_agy_commands.py              # lint the sibling skill
+    conda run -n py312 python evals/lint_agy_commands.py --skill DIR
+    conda run -n py312 python evals/lint_agy_commands.py --verbose
 
 Exit codes:
     0  all documented commands are valid against the installed CLI
@@ -41,7 +41,8 @@ CLI = "agy"
 # Known agy subcommand words, used to peel a subcommand chain out of a
 # command's tokens.
 SUBCOMMANDS = {
-    "changelog", "help", "install", "models", "plugin", "plugins", "update",
+    "agent", "agents", "changelog", "help", "install", "mcp", "mic-serve",
+    "models", "plugin", "plugins", "remote-control", "update",
 }
 
 # Flags that consume the following token as their value (so a value like a model
@@ -51,6 +52,8 @@ VALUE_FLAGS = {
     "-i", "--prompt-interactive",
     "--model", "--conversation",
     "--add-dir", "--print-timeout", "--log-file",
+    "--output-format", "--input-format", "--json-schema",
+    "--mode", "--effort", "--project", "--agent",
 }
 
 # Flags every command accepts; never treat these as drift. (`--version` works
