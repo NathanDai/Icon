@@ -1,6 +1,6 @@
 ---
 name: agy
-description: "Delegate a consult to Google Antigravity's `agy` CLI (successor to gemini-cli) and bring the answer back. Use when the user explicitly asks agy, antigravity or gemini to do something — `/agy`, `/gemini`, \"ask gemini …\", \"问问 gemini …\", \"让 agy 看下 …\" — for a second opinion, review, research or analysis (code or non-code: emails, plans, decisions), to write prose (docs, Obsidian notes, articles, reports), or to generate/edit an image; also to continue an agy thread or image already started in this conversation. Also use whenever Claude itself dispatches work to AGY under the global CLAUDE.md Worker Router — exploration, writing work (docs, Obsidian notes, articles), or a review in the Writer/Reviewer chain — even if the user named no tool. A mere mention of agy or Gemini (e.g. the Gemini API in a codebase) is not a request. Not for user requests that name no tool (unless the Router sends them to AGY), or for implementation, bug fixes and rescue work routed to Codex (`codex:rescue`). Uses only the latest Gemini Flash (currently Gemini 3.8 Flash (High))."
+description: "Delegate a consult to Google Antigravity's `agy` CLI (successor to gemini-cli) and bring the answer back. Use when the user explicitly asks agy, antigravity or gemini to do something — `/agy`, `/gemini`, \"ask gemini …\", \"问问 gemini …\", \"让 agy 看下 …\" — for a second opinion, review, research or analysis (code or non-code: emails, plans, decisions), to write prose (docs, Obsidian notes, articles, reports), or to generate/edit an image; also to continue an agy thread or image already started in this conversation. Also use whenever Claude, as the Commander (not as a delegated subagent), dispatches work to AGY under the global CLAUDE.md Worker Router — exploration, writing work (docs, Obsidian notes, articles), or a review in the Writer/Reviewer chain — even if the user named no tool. A mere mention of agy or Gemini (e.g. the Gemini API in a codebase) is not a request. Not for user requests that name no tool (unless the Router sends them to AGY), or for implementation, bug fixes and rescue work routed to Codex (`codex:rescue`). Uses only the latest Gemini Flash (currently Gemini 3.8 Flash (High))."
 ---
 
 # agy — delegate to Google Antigravity (multi-model)
@@ -26,6 +26,7 @@ Do NOT trigger for:
 - Anything where the user wants Claude itself to do the work ("you write it", "don't delegate this")
 - work routed to Codex — implementation, bug fixes, code-execution / test loops, rescue ("用 codex 修这个 bug", "ask codex …"): that's `codex:rescue`. When one request names both Codex and agy/gemini ("ask codex and agy to both review this"), handle the agy part here and send the Codex part through `codex:rescue`.
 - A bare request with no tool named — "review my PR", "create an image" — naming the tool is how the user chooses one (unless the Router, not the request, sends the work to AGY)
+- **Router dispatch when Claude is not the Commander** — if Claude is itself a delegated subagent, fork or teammate, or the Task Packet forbids delegation, the Router does not apply and this skill must not be triggered by it. A user who names agy directly still counts.
 - **Mentions that aren't requests** — the Gemini API/SDK or model in a codebase ("这个项目用了 gemini API"), the zodiac sign ("my partner's a Gemini"), anti-gravity in physics. Mentioning agy or Gemini is not asking to delegate to it.
 - Questions *about* agy or its setup, not delegations *to* it — "explain antigravity's permission model", "help me install / sign in to agy", "how do I run agy interactively"
 
@@ -35,13 +36,13 @@ Just invoke `agy` directly — assume it's installed. Don't gate the session beh
 
 Diagnose only on an actual failure: if a call comes back "command not found" / not on PATH, stop and tell the user "`agy` not on PATH — install Antigravity from https://antigravity.google, then re-run" (don't fall back to anything else). Auth is a free **Google account** (agy opens a browser, or prints an authorization URL over SSH, on first use) — never write or pass API keys.
 
-**Quota check (optional, fast):** `agy -p "/usage"` prints the remaining share and reset time (UTC when piped) for each pool in a few seconds. Run it before a large job, or after a quota error to see when a pool resets. Pools seen on this account: `Gemini Models` and `Claude and GPT models`, each with a weekly and a five-hour limit. Flash draws from the Gemini pool, the only one this setup uses.
+**Quota check (optional, fast):** whether `/usage` reaches a model is unverified, so count it as one call against the parent task's call budget and skip it when the budget is 0. `agy -p "/usage"` prints the remaining share and reset time (UTC when piped) for each pool in a few seconds. Run it before a large job, or after a quota error to see when a pool resets. Pools seen on this account: `Gemini Models` and `Claude and GPT models`, each with a weekly and a five-hour limit. Flash draws from the Gemini pool, the only one this setup uses.
 
 ## Safety — agy acts by default (read this)
 
 Unlike codex (`--sandbox read-only`), **`agy` has no usable read-only mode.** Re-verified on agy 1.3.2 (2026-10-10):
 
-- **Without** `--dangerously-skip-permissions`, headless `-p` auto-denies any non-allowlisted tool and the whole call gives up: exit 0, empty `response`, a `denied_actions` list in the JSON, and `jetski: no output produced — a tool required the "write_file" permission…` on stderr. So **always pass `--dangerously-skip-permissions`**; with it, `-p` auto-approves everything, including file writes and shell.
+- **Without** `--dangerously-skip-permissions`, headless `-p` auto-denies any non-allowlisted tool and the whole call gives up: exit 0, empty `response`, a `denied_actions` list in the JSON, and `jetski: no output produced — a tool required the "write_file" permission…` on stderr. So this skill's calls pass `--dangerously-skip-permissions` — the user-approved compatibility method for headless calls from Claude. With it, `-p` auto-approves everything, including file writes and shell. It is **not isolation**, and it is not a rule for every AGY session: the user's own AGY sessions are unaffected. Whether a restricted allow-list configuration can replace it is unverified.
 - **`--mode plan` is not a read-only switch.** With `--dangerously-skip-permissions` it still wrote a file on request; without it, even `read_file` was denied and the call gave up. Don't use it as isolation.
 - `--sandbox` restricts network and out-of-workspace access but did **not** stop a local file write (verified on an older build) — it is not a read-only switch either.
 
@@ -59,7 +60,7 @@ Pick a model, state it in one line, and run. **An unknown `--model` fails hard**
 |---|---|
 | `Gemini 3.8 Flash (High)` | **every call**: exploration, analysis, second opinions, reviews, writing, images |
 
-**Only Gemini is used, specifically the latest Gemini Flash.** `Claude Sonnet 5.5 (High)`, `Claude Opus 5.5 (High)` and GPT-OSS all sit in the Claude/GPT pool, whose quota is too small, so none of them is used. Gemini Pro is not used either, and don't step down to any of these on a quota error. When `agy models` lists a newer Flash, smoke-test it and update this table and global CLAUDE.md together.
+**Only Gemini is used, specifically the latest Gemini Flash.** `Claude Sonnet 5.5 (High)`, `Claude Opus 5.5 (High)` and GPT-OSS all sit in the Claude/GPT pool, whose quota is too small, so none of them is used. Gemini Pro is not used either, and don't step down to any of these on a quota error. When `agy models` lists a newer Flash, a smoke test is a real call: do it only when the user has given a call budget for it, then update this table and global CLAUDE.md together.
 
 Always pass `--model "Gemini 3.8 Flash (High)"` explicitly (the built-in default is not pinned and has drifted across releases). The `(Low/Medium/High)` suffix is the reasoning tier — **don't pass `--effort`**: it fails with `--effort is not supported for model` (exit 1, re-verified on 1.3.2). State it in one line: *"Asking agy — Gemini 3.8 Flash (High)."* Then run.
 
@@ -99,13 +100,13 @@ A call **succeeded** only when exit 0, `status == "SUCCESS"`, `response` is non-
 | exit 0, `SUCCESS`, empty `response`, `denied_actions: [...]` | a tool was auto-denied — `--dangerously-skip-permissions` was missing. Fix the command; this is not a model failure. |
 | exit 3, `"status":"ERROR"`, `"error":"Your AI credits balance is too low to continue."`; stderr `AGY_ERROR: {… "error_code":429, "status":"RESOURCE_EXHAUSTED" …}` | quota exhausted for that pool — see [Error handling](#error-handling) |
 | exit 1, no JSON, stderr `invalid model selection` | bad `--model` string or `--effort` passed |
-| exit 0, empty `out.json` | unknown failure — read `err.txt`, retry **once**, then stop and surface it |
+| exit 0, empty `out.json` | unknown failure — read `err.txt`; retry **once** only if the parent task's call budget allows, otherwise stop and surface it |
 
 ## Topic-aware sessions (this conversation only)
 
 agy persists every conversation, so don't treat each call as a blank slate. Within **this** Claude Code conversation, keep an in-context map of each topic you've sent to agy → that conversation's id (a UUID). The map lives only in your working memory for this conversation; we deliberately don't rematch across restarts.
 
-**The id comes from the JSON:** `conversation_id` in `out.json`. Record `topic → <uuid>` right after each call. (Fallback only if the JSON is missing: `~/.gemini/antigravity-cli/cache/last_conversations.json` maps each workspace dir — stored as its real path, e.g. `/private/tmp/…` — to its latest conversation UUID; it is overwritten by the next call from the same dir.)
+**The id comes from the JSON:** `conversation_id` in `out.json`. Record `topic → <uuid>` right after each call. If the JSON is missing or has no `conversation_id`, record this call's id as UNKNOWN. Don't take it from `~/.gemini/antigravity-cli/cache/last_conversations.json`: it maps each workspace dir to the *latest* conversation from any session and is overwritten by the next call from that dir, so it cannot prove which call produced which id.
 
 **The user never labels topics — you infer them.** On every call:
 
@@ -174,21 +175,21 @@ agy's Flash model has its own cutoff and limits. Treat its output as a **peer's 
 - **`command not found`** → agy isn't installed; install Antigravity from https://antigravity.google.
 - **Auth / "sign in" error** → agy uses a Google account; have the user run `agy` once interactively to complete sign-in, then retry. Never use API keys.
 - **Quota** (exit 3, `credits balance is too low`, `429` / `RESOURCE_EXHAUSTED`) → don't retry in a loop. Run `agy -p "/usage"` to see which pool is out and when it resets. A Flash 429 means the Gemini pool is out; don't switch to the Claude models in the other pool. Fall back **by role per global CLAUDE.md「外部 Worker Router」** (路由表, Writer / Reviewer, 额度回落与暂停) — that file is the only authority for which worker and model come next; don't use a fallback model listed anywhere else.
-- **Denied tool** (`denied_actions`, empty `response`) → the command lacked `--dangerously-skip-permissions`; fix and re-run once.
+- **Denied tool** (`denied_actions`, empty `response`) → the command lacked `--dangerously-skip-permissions`; fix and re-run once if the call budget allows.
 - **Other non-zero exit** → surface `err.txt`; ask before retrying. Never silently escalate flags to "make it work."
-- **Timeout** → `--print-timeout` hit. For broad work, re-run once with `15m` in the background; if it times out again, narrow the task instead of raising the limit further.
+- **Timeout** → `--print-timeout` hit. For broad work, re-run once with `15m` in the background if the call budget allows; if it times out again, narrow the task instead of raising the limit further.
 
 ## Things NOT to do
 
 - ❌ Don't present this as Claude doing the work — say "I'll ask agy" and name the model.
 - ❌ Don't assume `-p`, `--mode plan` or `--sandbox` is read-only — constrain via the prompt and check `git status`.
-- ❌ Don't drop `--dangerously-skip-permissions` — without it any non-allowlisted tool aborts the call with exit 0 and no answer.
+- ❌ Don't drop `--dangerously-skip-permissions` from this skill's calls without a verified replacement — without it any non-allowlisted tool aborts the call with exit 0 and no answer. (It is a compatibility method, not isolation.)
 - ❌ Don't omit `--print-timeout` — the default waits forever.
 - ❌ Don't pass `--effort`, or a `--model` string that isn't in `agy models`.
 - ❌ Don't route topic resume by `-c` / `--continue` — resume by the stored `conversation_id`.
 - ❌ Don't hard-code fallback models here — follow the global Router.
 - ❌ Don't write or read API keys — agy uses a Google account.
-- ❌ Don't loop calls to "fix" empty/failed output. One retry max, then stop and ask.
+- ❌ Don't loop calls to "fix" empty/failed output. One retry max, and only within the parent task's call budget; then stop and ask.
 
 ## Reference
 
