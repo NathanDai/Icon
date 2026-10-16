@@ -1,6 +1,6 @@
 ---
 name: agy-codex
-description: Consult AGY (Gemini 3.8 Flash) for substantial analysis routed by AGENTS.md or an explicit AGY/Gemini request. When Codex is delegated by Claude, use only if the Task Packet or an active convention allows it and the call budget, scope and permissions allow; every real call counts against the budget. Exclude strict read-only tasks and small direct fixes.
+description: Consult AGY (Gemini 4 Argon for analysis, Gemini 3.8 Flash for writing) for substantial analysis routed by AGENTS.md or an explicit AGY/Gemini request. When Codex is delegated by Claude, use only if the Task Packet or an active convention allows it and the call budget, scope and permissions allow; every real call counts against the budget. Exclude strict read-only tasks and small direct fixes.
 ---
 
 # AGY for Codex
@@ -21,14 +21,15 @@ Codex 独立使用时，大型源码阅读、调用链、长日志、根因、�
 
 ## 模型与调用
 
-- 探索、分析、第二意见：`Gemini 3.8 Flash (High)`。
-- 只使用 `Gemini 3.8 Flash (High)`；不使用 Sonnet、Opus 或 GPT-OSS。`agy models` 列出某个模型不代表可以用它。显式传 `--model`，按需用 `agy models` 核对名称；不传 `--effort`。
+- 探索、分析、第二意见、审查：`Gemini 4 Argon (High)`（独立周额度池）。
+- 写文档、文章和生成图片：`Gemini 3.8 Flash (High)`（agy 1.4.0 的模型列表里 Flash 只剩 3.8）。
+- 只使用这两个模型；不使用 Sonnet、Opus 或 GPT-OSS。`agy models` 列出某个模型不代表可以用它。显式传 `--model`，按需用 `agy models` 核对名称；不传 `--effort`（1.4.0 的 help 虽已列出，实测对带档位的模型名仍报错 exit 1）。
 - 参数以当前 `agy --help` 为准；显式设 `--print-timeout`，普通调用 5m，大范围探索 15m。冒烟也是真实调用，只在调用预算允许时做。不把 `--mode plan`、`-p` 或 `--sandbox` 当成已验证的只读隔离。
 - AGY 是同步 CLI；长任务使用当前执行工具的后台进程或会话机制，等待对应进程退出。冷启动可能需 2～3 分钟。
 - 复杂提示词在获准的临时目录中准备，避免拼接不可信 shell 文本。例如：
 
 ```bash
-agy --model "Gemini 3.8 Flash (High)" --output-format json --print-timeout 15m -p "$(cat /absolute/path/prompt.txt)" > /absolute/path/out.json 2> /absolute/path/err.txt
+agy --model "Gemini 4 Argon (High)" --output-format json --print-timeout 15m -p "$(cat /absolute/path/prompt.txt)" > /absolute/path/out.json 2> /absolute/path/err.txt
 ```
 
 分析提示词开头写明：“只分析；不得创建、修改或删除项目文件；只允许必要的只读命令；禁止有写入副作用的数据库、SSH、对象存储、通知及其他 MCP 操作。允许 CLI 自身必要的会话缓存。”纯文本冒烟进一步禁止所有工具调用。
@@ -47,4 +48,4 @@ agy --model "Gemini 3.8 Flash (High)" --output-format json --print-timeout 15m -
 - 同主题用已确认的 `--conversation <uuid>` 并补充新增事实；新主题另开。UUID 缺失时不以 `-c`、`--continue` 或最近会话替代；需要旧上下文时先解决匹配问题。
 - 仅在用户明确要求 AGY 生成或编辑图像时使用其图像能力；说明获准输出路径，完成后查看图像，同主题沿用已确认 UUID。
 - 退出码为 0 且有有效回答才算成功；权限拒绝或无结论按失败处理。空输出或有 `denied_actions` 时，在调用预算允许的前提下最多重试一次，不提升权限。
-- 429 或 credits balance too low 不循环重试；不自动换供应商或定时恢复。Gemini 与 Claude 额度分别判断，Flash 不可用时不换到其他模型，报告缺口；模型列表不证明实际调用可用。
+- 429 或 credits balance too low 不循环重试；不自动换供应商或定时恢复。额度分 `Gemini Models`（Flash）、`Gemini 4 Argon`、`Claude and GPT models` 三池判断：只有 Argon 池耗尽时分析可改用 Flash，Flash 不可用时不换到 Claude/GPT 池，报告缺口；模型列表不证明实际调用可用。
