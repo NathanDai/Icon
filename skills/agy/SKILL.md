@@ -1,11 +1,11 @@
 ---
 name: agy
-description: "Delegate a consult to Google Antigravity's `agy` CLI (successor to gemini-cli) and bring the answer back. Use when the user explicitly asks agy, antigravity or gemini to do something — `/agy`, `/gemini`, \"ask gemini …\", \"问问 gemini …\", \"让 agy 看下 …\" — for a second opinion, review, research or analysis (code or non-code: emails, plans, decisions), to write prose (docs, Obsidian notes, articles, reports), or to generate/edit an image; also to continue an agy thread or image already started in this conversation. Also use whenever Claude, as the Commander (not as a delegated subagent), dispatches work to AGY under the global CLAUDE.md Worker Router — exploration, writing work (docs, Obsidian notes, articles), or a review in the Writer/Reviewer chain — even if the user named no tool. A mere mention of agy or Gemini (e.g. the Gemini API in a codebase) is not a request. Not for user requests that name no tool (unless the Router sends them to AGY), or for implementation, bug fixes and rescue work routed to Codex (`codex:rescue`). Uses only Gemini: Gemini 4 Argon (High) for read-only work (exploration, analysis, reviews), Gemini 3.8 Flash (High) for writing and images."
+description: "Delegate work to Google Antigravity's `agy` CLI (successor to gemini-cli) and bring the result back. Use when the user explicitly asks agy, antigravity or gemini (by name or slash command, in any language) for a second opinion, review, research or analysis of code or non-code material, for prose (docs, Obsidian notes, articles, reports), or for an image, and to continue an agy thread or image from this conversation. Also use when Claude as Commander, not as a delegated subagent, dispatches exploration, writing work or a review to AGY under the global CLAUDE.md Worker Router, even if the user named no tool. Not for a mere mention of agy or Gemini (e.g. the Gemini API in a codebase), for requests that name no tool unless the Router sends them to AGY, or for implementation, bug fixes and rescue work routed to Codex (`codex:rescue`)."
 ---
 
 # agy — delegate to Google Antigravity (multi-model)
 
-Delegate a prompt to **Antigravity's `agy` CLI** and bring the result back. agy is Google's agentic CLI and the sanctioned successor to gemini-cli's individual tier (which Google deprecated) — it authenticates with a free Google account and routes to several models (Gemini 3.x, Claude Opus/Sonnet 5.5, GPT-OSS), but this setup uses **only the latest Gemini Flash** — the Claude/GPT pool's quota is too small. The user keeps Claude Code open while another model handles the side task.
+Delegate a prompt to **Antigravity's `agy` CLI** and bring the result back. agy is Google's agentic CLI and the sanctioned successor to gemini-cli's individual tier (which Google deprecated) — it authenticates with a free Google account and routes to several models (Gemini, Claude Opus/Sonnet 5.5, GPT-OSS), but this setup uses **only two Gemini models** — `Gemini 4 Argon (High)` for read-only work, `Gemini 3.8 Flash (High)` for writing and images — because the Claude/GPT pool's quota is too small. The user keeps Claude Code open while another model handles the side task.
 
 ## When to use
 
@@ -54,7 +54,7 @@ Safety therefore lives in **how you prompt and scope it**:
 
 ## Parameters — default and proceed
 
-Pick a model, state it in one line, and run. **An unknown `--model` fails hard** — `error: invalid model selection … is not recognized`, exit 1, plain-text stderr (no JSON), followed by the available list — so only ever pass a string that appears verbatim in `agy models`:
+Pick a model, state it in one line, and run. **An unknown `--model` fails hard** — exit 1, `"status":"ERROR"` with `invalid model selection … is not recognized` in `error` and on stderr, followed by the available list — so only ever pass a string that appears verbatim in `agy models`:
 
 | Model string (pass verbatim) | Use |
 |---|---|
@@ -70,14 +70,14 @@ Always pass `--model` explicitly (the built-in default is not pinned and has dri
 Always use JSON output, an explicit timeout, and separate stdout/stderr files in the scratchpad:
 
 ```bash
-agy --dangerously-skip-permissions --model "Gemini 4 Argon (High)" --output-format json --print-timeout 5m -p "$(cat <scratchpad>/agy/prompt.txt)" > <scratchpad>/agy/out.json 2> <scratchpad>/agy/err.txt
+agy --dangerously-skip-permissions --model "Gemini 4 Argon (High)" --output-format json --print-timeout 20m -p "$(cat <scratchpad>/agy/prompt.txt)" > <scratchpad>/agy/out.json 2> <scratchpad>/agy/err.txt
 # writing work / images: same command with --model "Gemini 3.8 Flash (High)"
 ```
 
 - **Prompt in a file.** Write the prompt with the Write tool to `<scratchpad>/agy/prompt.txt` (absolute path; reuse or number the files per call) and pass `-p "$(cat …)"` — inside double quotes the substituted text goes through literally, so quotes, backticks and newlines need no escaping.
 - **Self-contained prompt.** agy can't see this conversation. Include goal, absolute paths, known facts, constraints (the read-only preamble above, or the files it may change), acceptance criteria, and ask it to answer as `STATUS / FINDINGS / RELEVANT_FILES (FILES_CHANGED for edits) / TESTS / RISKS / NEXT_ACTION` with `file:line` evidence, without pasting whole files or logs back.
 - **cwd is agy's workspace.** Run from the project root when agy should read the repo; from an empty scratch dir for consults that need no files. `--add-dir <dir>` (repeatable) adds context; it does **not** restrict writes.
-- **Always pass `--print-timeout`.** In 1.4.0 the default is `0s` = wait forever. Use `5m` for normal consults and `15m` for broad exploration. Set the Bash tool timeout a little above it; for a 15m job, run it with `run_in_background` and keep working — you're re-invoked when it exits.
+- **Always pass `--print-timeout`.** In 1.4.0 the default is `0s` = wait forever. Err long, not short: `20m` for normal consults and images, `60m` for broad exploration, reviews and writing work. Always run with `run_in_background` and keep working — you're re-invoked when it exits. A big task may spend its first 10–20 minutes just reading code; long runtime alone is not a reason to call it slow.
 - **Cold start** can take 2–3 minutes the first time in a while (warm calls took 3–50 s in testing). That's normal, not a hang.
 
 ### Reading the result
@@ -123,7 +123,7 @@ agy persists every conversation, so don't treat each call as a blank slate. With
 ### Resuming a conversation — by id, with a bridge
 
 ```bash
-agy --dangerously-skip-permissions --conversation <stored-uuid> --model "<same model as the conversation>" --output-format json --print-timeout 5m -p "$(cat <scratchpad>/agy/prompt2.txt)" > <scratchpad>/agy/out2.json 2> <scratchpad>/agy/err2.txt
+agy --dangerously-skip-permissions --conversation <stored-uuid> --model "<same model as the conversation>" --output-format json --print-timeout 20m -p "$(cat <scratchpad>/agy/prompt2.txt)" > <scratchpad>/agy/out2.json 2> <scratchpad>/agy/err2.txt
 ```
 
 Resume by the **stored id** — it's cwd-independent (verified on 1.4.0: same `conversation_id` back, `num_turns` incremented, earlier context recalled). Don't route by `-c` / `--continue`: it resumes the *latest* conversation, and from a different directory it agentically greps transcripts to find one — slow and side-effecty. If you have no id for the topic, start fresh rather than guess.
@@ -142,7 +142,7 @@ Docs, Obsidian notes, articles and reports go to agy (Router role "文字工作"
 
 ## Images
 
-agy produces images on the user's Google subscription, with **no API key or extension**. Since 1.2.16 image requests go to a built-in `image-generator` subagent; an explicit output path in the prompt is honored (verified on 1.3.2). For very simple shapes it may draw the image with code instead of the image model — if you need an illustration, say so in the prompt.
+agy produces images on the user's Google subscription, with **no API key or extension**. Image requests go to a built-in `image-generator` subagent; an explicit output path in the prompt is honored (verified on 1.3.2). For very simple shapes it may draw the image with code instead of the image model — if you need an illustration, say so in the prompt.
 
 **Only on an explicit agy/gemini request** — *"use agy to illustrate this"*, *"have gemini make an image of …"*. A bare *"create an image"* (no tool named) doesn't trigger this skill.
 
@@ -150,7 +150,7 @@ agy produces images on the user's Google subscription, with **no API key or exte
 - **Give an absolute output path** and ask it to reply with the saved path. Don't add the read-only preamble here — it needs to write the image.
 
 ```bash
-agy --dangerously-skip-permissions --model "Gemini 3.8 Flash (High)" --output-format json --print-timeout 8m -p "$(cat <scratchpad>/agy/image_prompt.txt)" > <scratchpad>/agy/image.json 2> <scratchpad>/agy/image_err.txt
+agy --dangerously-skip-permissions --model "Gemini 3.8 Flash (High)" --output-format json --print-timeout 20m -p "$(cat <scratchpad>/agy/image_prompt.txt)" > <scratchpad>/agy/image.json 2> <scratchpad>/agy/image_err.txt
 ```
 
 **Read the saved PNG** to confirm it matches, show it, and report the path. **Iterating** ("make it warmer", "add a caption") is an edit of the same image — resume that conversation by its stored id and describe the change.
@@ -179,7 +179,7 @@ agy's Gemini models have their own cutoff and limits. Treat its output as a **pe
 - **Quota** (exit 3, `credits balance is too low`, `429` / `RESOURCE_EXHAUSTED`) → don't retry in a loop. Run `agy -p "/usage"` to see which pool is out and when it resets. Check which pool is out: if only `Gemini 4 Argon` is exhausted, read-only work may move to Flash (separate pool); if `Gemini Models` is out, Flash is unavailable and Argon doesn't cover writing work. Never switch to the Claude models in the other pool. Fall back **by role per global CLAUDE.md「外部 Worker Router」** (路由表, Writer / Reviewer, 额度回落与暂停) — that file is the only authority for which worker and model come next; don't use a fallback model listed anywhere else.
 - **Denied tool** (`denied_actions`, empty `response`) → the command lacked `--dangerously-skip-permissions`; fix and re-run once if the call budget allows.
 - **Other non-zero exit** → surface `err.txt`; ask before retrying. Never silently escalate flags to "make it work."
-- **Timeout** → `--print-timeout` hit. For broad work, re-run once with `15m` in the background if the call budget allows; if it times out again, narrow the task instead of raising the limit further.
+- **Timeout** → `--print-timeout` hit. For broad work, re-run once with `90m` in the background if the call budget allows; if it times out again, narrow the task instead of raising the limit further.
 
 ## Things NOT to do
 

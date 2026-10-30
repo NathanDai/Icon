@@ -21,7 +21,7 @@ description: 由 Claude 主动编排的独立代码审查流程：派 Codex / Gr
 按全局 CLAUDE.md「Writer / Reviewer」选第一个可用的异构 Reviewer，并记下实际用了谁（含模型）。默认模型已写在 `rc.sh` 顶部（Codex `gpt-6.1-sol`，effort 来自 `~/.codex/config.toml`；Grok `grok-4.6`+`high`），一般不必再传。
 
 - 设计取舍、并发、安全、数据正确性等复杂问题，在常规 review 之外加一次挑战审查：Reviewer 是 Codex 时用 `codex-adv`，是 Grok 时用 `grok-critique`。二者通常只选一个。
-- Fast Path 小改动（几行、能一句话说清 diff）可以不派外部审查，或只派一个 review，不加挑战审查。
+- 非高风险的 Fast Path 小改动（几行、能一句话说清 diff）可以不派外部审查；高风险的小改动（数据正确性、安全、并发、金额/单位、生产写入路径）仍按全局 CLAUDE.md 至少派一次独立 review，可不加挑战审查。
 
 ## 派发与追踪
 

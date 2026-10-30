@@ -21,7 +21,7 @@ Verified against **agy 1.4.0** (2026-10-16): `--help`, `agy models`, `/usage`, J
 | `--input-format`, `--json-schema` | stream-json input; JSON schema for structured final output. Not used by the skill. |
 | `--project`, `--new-project`, `--agent`, `--disable-slash-commands`, `--remote-control` | Project / agent selection and other session options. Not used by the skill. |
 | `--sandbox` | Run with terminal restrictions (network / out-of-workspace). **Not** a read-only mode — local writes still happen. |
-| `--print-timeout <dur>` | Time limit for `-p`. Default **`0s` = no limit** in 1.4.0 (was 5m in older builds) — always pass it (`5m` normal, `15m` broad exploration). |
+| `--print-timeout <dur>` | Time limit for `-p`. Default **`0s` = no limit** in 1.4.0 (was 5m in older builds) — always pass it (`20m` normal, `60m` broad exploration, reviews, writing). |
 | `--log-file <path>` | Override the CLI log path (logs default to `~/.gemini/antigravity-cli/log/`). |
 
 ## JSON output
@@ -62,7 +62,7 @@ bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"
 
 ```
 Gemini 4 Argon (High) | (Medium) | (Low)     ← own weekly-only quota pool
-Gemini 3.8 Flash (High) | (Medium) | (Low)   ← the only Flash left
+Gemini 3.8 Flash (High) | (Medium) | (Low)   ← writing and images
 Claude Opus 5.5 (High) | (Medium) | (Low)
 Claude Sonnet 5.5 (High) | (Medium) | (Low)
 GPT-OSS 120B (Medium)
