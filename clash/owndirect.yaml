@@ -1,0 +1,9 @@
+# Clash Rule-Provider 规则文件
+# Behavior: classical (支持 DOMAIN-SUFFIX, DOMAIN-KEYWORD, DOMAIN, IP-CIDR 等)
+# 在线直链: https://raw.githubusercontent.com/NathanDai/Icon/main/clash/rules.yaml
+
+payload:
+  - DOMAIN,persistent.oaistatic.com
+  - DOMAIN,registry.npmjs.org
+  - DOMAIN,downloads.cursor.com
+
