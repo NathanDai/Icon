@@ -40,7 +40,7 @@ Diagnose only on an actual failure: if a call comes back "command not found" / n
 
 ## Safety — agy acts by default (read this)
 
-Unlike codex (`--sandbox read-only`), **`agy` has no usable read-only mode.** Re-verified on agy 1.4.0 (2026-10-16):
+Unlike codex (`--sandbox read-only`), **`agy` has no usable read-only mode.** Re-verified on agy 1.4.0 (2026-10-16); the auto-deny behavior below re-checked on 1.4.12 (2026-10-31):
 
 - **Without** `--dangerously-skip-permissions`, headless `-p` auto-denies any non-allowlisted tool and the whole call gives up: exit 0, empty `response`, a `denied_actions` list in the JSON, and `jetski: no output produced — a tool required the "write_file" permission…` on stderr. So this skill's calls pass `--dangerously-skip-permissions` — the user-approved compatibility method for headless calls from Claude. With it, `-p` auto-approves everything, including file writes and shell. It is **not isolation**, and it is not a rule for every AGY session: the user's own AGY sessions are unaffected. Whether a restricted allow-list configuration can replace it is unverified.
 - **`--mode plan` is not a read-only switch.** On 1.4.0 with `--dangerously-skip-permissions`, a request to write a workspace file instead produced a plan artifact under `~/.gemini/antigravity-cli/brain/<conversation_id>/` (on 1.3.2 it wrote the workspace file). It still writes, and the behavior has changed between releases — don't use it as isolation.
@@ -63,7 +63,7 @@ Pick a model, state it in one line, and run. **An unknown `--model` fails hard**
 
 **Only Gemini is used: Argon for read-only work, `Gemini 3.8 Flash (High)` for prose and images** — the only Gemini models `agy models` lists. Argon's prose and image generation are unevaluated, so they stay on Flash. `Claude Sonnet 5.5 (High)`, `Claude Opus 5.5 (High)` and GPT-OSS all sit in the Claude/GPT pool, whose quota is too small, so none of them is used. Don't step down to any of them on a quota error. When `agy models` lists a newer Gemini model, a smoke test is a real call: do it only when the user has given a call budget for it, then update this table and global CLAUDE.md together.
 
-Always pass `--model` explicitly (the built-in default is not pinned and has drifted across releases). The `(Low/Medium/High)` suffix is the reasoning tier — **don't pass `--effort`**: 1.4.0's `--help` lists `low|medium|high|xhigh|max`, but `--model "Gemini 4 Argon (High)" --effort high` still fails with `--effort is not supported for model` (exit 1, verified 1.4.0). State it in one line: *"Asking agy — Gemini 4 Argon (High)."* Then run.
+Always pass `--model` explicitly (the built-in default is not pinned and has drifted across releases). The `(Low/Medium/High)` suffix is the reasoning tier — **don't pass `--effort`**: 1.4.0's `--help` lists `low|medium|high|xhigh|max`, but `--model "Gemini 4 Argon (High)" --effort high` still fails with `--effort is not supported for model` (exit 1, verified 1.4.0; re-checked 1.4.12, 2026-10-31). State it in one line: *"Asking agy — Gemini 4 Argon (High)."* Then run.
 
 ## Invocation
 
@@ -77,12 +77,12 @@ agy --dangerously-skip-permissions --model "Gemini 4 Argon (High)" --output-form
 - **Prompt in a file.** Write the prompt with the Write tool to `<scratchpad>/agy/prompt.txt` (absolute path; reuse or number the files per call) and pass `-p "$(cat …)"` — inside double quotes the substituted text goes through literally, so quotes, backticks and newlines need no escaping.
 - **Self-contained prompt.** agy can't see this conversation. Include goal, absolute paths, known facts, constraints (the read-only preamble above, or the files it may change), acceptance criteria, and ask it to answer as `STATUS / FINDINGS / RELEVANT_FILES (FILES_CHANGED for edits) / TESTS / RISKS / NEXT_ACTION` with `file:line` evidence, without pasting whole files or logs back.
 - **cwd is agy's workspace.** Run from the project root when agy should read the repo; from an empty scratch dir for consults that need no files. `--add-dir <dir>` (repeatable) adds context; it does **not** restrict writes.
-- **Always pass `--print-timeout`.** In 1.4.0 the default is `0s` = wait forever. Err long, not short: `20m` for normal consults and images, `60m` for broad exploration, reviews and writing work. Always run with `run_in_background` and keep working — you're re-invoked when it exits. A big task may spend its first 10–20 minutes just reading code; long runtime alone is not a reason to call it slow.
+- **Always pass `--print-timeout`.** In 1.4.0–1.4.12 the default is `0s` = wait forever. Err long, not short: `20m` for normal consults and images, `60m` for broad exploration, reviews and writing work. Always run with `run_in_background` and keep working — you're re-invoked when it exits. A big task may spend its first 10–20 minutes just reading code; long runtime alone is not a reason to call it slow.
 - **Cold start** can take 2–3 minutes the first time in a while (warm calls took 3–50 s in testing). That's normal, not a hang.
 
 ### Reading the result
 
-`out.json` is a single JSON object (verified on 1.4.0):
+`out.json` is a single JSON object (verified on 1.4.0; same keys on 1.4.12, 2026-10-31):
 
 ```json
 {"conversation_id":"<uuid>","status":"SUCCESS","response":"…","duration_seconds":3.1,"num_turns":1,"usage":{…}}
