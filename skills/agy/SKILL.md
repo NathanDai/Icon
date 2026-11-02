@@ -82,25 +82,28 @@ agy --dangerously-skip-permissions --model "Gemini 4 Argon (High)" --output-form
 
 ### Reading the result
 
-`out.json` is a single JSON object (verified on 1.4.0; same keys on 1.4.12, 2026-10-31):
+`out.json` is a single JSON object (verified on 1.4.12, 2026-11-02):
 
 ```json
 {"conversation_id":"<uuid>","status":"SUCCESS","response":"…","duration_seconds":3.1,"num_turns":1,"usage":{…}}
 ```
 
+Since 1.4.11 a turn that ended early also carries `finished_reason`: `print_timeout` (the `--print-timeout` expired; `response` is partial or empty), `interrupted` (canceled), or `error`. The field is **omitted when the turn finishes normally**.
+
 Extract the fields with jq (`/usr/bin/jq`):
 
 ```bash
-jq -r '"status=\(.status) id=\(.conversation_id) denied=\(.denied_actions // [] | length) error=\(.error // "")"' <scratchpad>/agy/out.json
+jq -r '"status=\(.status) id=\(.conversation_id) finished=\(.finished_reason // "normal") denied=\(.denied_actions // [] | length) error=\(.error // "")"' <scratchpad>/agy/out.json
 jq -r '.response' <scratchpad>/agy/out.json
 ```
 
-A call **succeeded** only when exit 0, `status == "SUCCESS"`, `response` is non-empty, and there is no `denied_actions`. Otherwise:
+A call **succeeded** only when exit 0, `status == "SUCCESS"`, `response` is non-empty, there is no `denied_actions`, and there is **no `finished_reason`**. A timed-out run still exits 0 with `SUCCESS`, so without the last check a cut-off answer passes as complete. Otherwise:
 
 | Symptom | Meaning |
 |---|---|
+| exit 0, `SUCCESS`, `"finished_reason":"print_timeout"`, `response` partial or empty; stderr `[agy] print timeout after … returning partial output` (1.4.12) | `--print-timeout` expired — the answer is incomplete; never use it as a result. See Timeout in [Error handling](#error-handling) |
 | exit 0, `SUCCESS`, empty `response`, `denied_actions: [...]` | a tool was auto-denied — `--dangerously-skip-permissions` was missing. Fix the command; this is not a model failure. |
-| exit 3, `"status":"ERROR"`, `"error":"Your AI credits balance is too low to continue."`; stderr `AGY_ERROR: {… "error_code":429, "status":"RESOURCE_EXHAUSTED" …}` (shape last seen on 1.3.2) | quota exhausted for that pool — see [Error handling](#error-handling) |
+| exit 3, `"status":"ERROR"`, `"error":"Your AI credits balance is too low to continue."`, `"finished_reason":"error"`; stderr `AGY_ERROR: {… "error_code":429, "status":"RESOURCE_EXHAUSTED" …}` (1.4.12) | quota exhausted for that pool — see [Error handling](#error-handling) |
 | exit 1, `"status":"ERROR"`, empty `conversation_id`, `error` and stderr `invalid model selection …` (1.4.0; older builds printed no JSON) | bad `--model` string or `--effort` passed |
 | exit 0, empty `out.json` | unknown failure — read `err.txt`; retry **once** only if the parent task's call budget allows, otherwise stop and surface it |
 
@@ -179,7 +182,7 @@ agy's Gemini models have their own cutoff and limits. Treat its output as a **pe
 - **Quota** (exit 3, `credits balance is too low`, `429` / `RESOURCE_EXHAUSTED`) → don't retry in a loop. Run `agy -p "/usage"` to see which pool is out and when it resets. Check which pool is out: if only `Gemini 4 Argon` is exhausted, read-only work may move to Flash (separate pool); if `Gemini Models` is out, Flash is unavailable and Argon doesn't cover writing work. Never switch to the Claude models in the other pool. Fall back **by role per global CLAUDE.md「外部 Worker Router」** (路由表, Writer / Reviewer, 额度回落与暂停) — that file is the only authority for which worker and model come next; don't use a fallback model listed anywhere else.
 - **Denied tool** (`denied_actions`, empty `response`) → the command lacked `--dangerously-skip-permissions`; fix and re-run once if the call budget allows.
 - **Other non-zero exit** → surface `err.txt`; ask before retrying. Never silently escalate flags to "make it work."
-- **Timeout** → `--print-timeout` hit. For broad work, re-run once with `90m` in the background if the call budget allows; if it times out again, narrow the task instead of raising the limit further.
+- **Timeout** → `--print-timeout` hit: exit 0 and `SUCCESS`, but `"finished_reason":"print_timeout"` and a partial `response`. Discard the partial answer. For broad work, re-run once with `90m` in the background if the call budget allows; if it times out again, narrow the task instead of raising the limit further.
 
 ## Things NOT to do
 
@@ -187,6 +190,7 @@ agy's Gemini models have their own cutoff and limits. Treat its output as a **pe
 - ❌ Don't assume `-p`, `--mode plan` or `--sandbox` is read-only — constrain via the prompt and check `git status`.
 - ❌ Don't drop `--dangerously-skip-permissions` from this skill's calls without a verified replacement — without it any non-allowlisted tool aborts the call with exit 0 and no answer. (It is a compatibility method, not isolation.)
 - ❌ Don't omit `--print-timeout` — the default waits forever.
+- ❌ Don't treat `SUCCESS` alone as success — check `finished_reason` too; a timed-out run returns `SUCCESS` with a partial answer.
 - ❌ Don't pass `--effort`, or a `--model` string that isn't in `agy models`.
 - ❌ Don't route topic resume by `-c` / `--continue` — resume by the stored `conversation_id`.
 - ❌ Don't hard-code fallback models here — follow the global Router.

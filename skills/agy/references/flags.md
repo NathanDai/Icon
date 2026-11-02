@@ -1,6 +1,6 @@
 # `agy` (Antigravity CLI) reference
 
-Verified against **agy 1.4.0** (2026-10-16): `--help`, `agy models`, `/usage`, JSON success/denied/bad-model/bad-effort shapes, resume by id, the permission guard and `--mode plan`. Items not re-run on 1.4.0 (quota-exhaustion shape, images, `--sandbox`) keep the version they were last seen on. agy moves fast — the help is the source of truth at runtime; re-check with `agy --help` if behavior surprises you.
+Verified against **agy 1.4.0** (2026-10-16): JSON denied/bad-model/bad-effort shapes, resume by id, the permission guard and `--mode plan`. Re-checked on **agy 1.4.12** (2026-11-02): `--help`, `agy models`, `/usage`, JSON success, quota-exhaustion and print-timeout shapes (`finished_reason`, added in 1.4.11). Items not re-run since (images, `--sandbox`) keep the version they were last seen on. agy moves fast — the help is the source of truth at runtime; re-check with `agy --help` if behavior surprises you.
 
 ## Top-level flags
 
@@ -21,31 +21,36 @@ Verified against **agy 1.4.0** (2026-10-16): `--help`, `agy models`, `/usage`, J
 | `--input-format`, `--json-schema` | stream-json input; JSON schema for structured final output. Not used by the skill. |
 | `--project`, `--new-project`, `--agent`, `--disable-slash-commands`, `--remote-control` | Project / agent selection and other session options. Not used by the skill. |
 | `--sandbox` | Run with terminal restrictions (network / out-of-workspace). **Not** a read-only mode — local writes still happen. |
-| `--print-timeout <dur>` | Time limit for `-p`. Default **`0s` = no limit** in 1.4.0 (was 5m in older builds) — always pass it (`20m` normal, `60m` broad exploration, reviews, writing). |
+| `--print-timeout <dur>` | Time limit for `-p`. Default **`0s` = no limit** in 1.4.0–1.4.12 (was 5m in older builds) — always pass it (`20m` normal, `60m` broad exploration, reviews, writing). On expiry the run still exits 0 with `SUCCESS` but sets `"finished_reason":"print_timeout"` and returns a partial `response` (1.4.12). |
 | `--log-file <path>` | Override the CLI log path (logs default to `~/.gemini/antigravity-cli/log/`). |
+| `--settings <json\|path>` | Settings for this session only, never saved: a JSON object of `settings.json` keys, inline or as a file path (seen in 1.4.12 `--help`). Not used by the skill; whether it can carry a restricted permission allow-list in place of `--dangerously-skip-permissions` is **unverified**. |
 
 ## JSON output
 
 `--output-format json` prints **one JSON object on stdout**; diagnostics go to stderr. Verified shapes (1.4.0 unless marked):
 
 ```text
-success:  {"conversation_id":"<uuid>","status":"SUCCESS","response":"正常\n","duration_seconds":3.1,"num_turns":1,"usage":{...}}           exit 0
+success:  {"conversation_id":"<uuid>","status":"SUCCESS","response":"正常\n","duration_seconds":5.4,"num_turns":1,"usage":{...}}           exit 0  (1.4.12)
+timeout:  {"conversation_id":"<uuid>","status":"SUCCESS","response":"<partial or empty>","num_turns":1,"finished_reason":"print_timeout",...}   exit 0  (1.4.12)
+          stderr: [agy] print timeout after 5s with turn in progress; returning partial output
 denied:   {"conversation_id":"<uuid>","status":"SUCCESS","response":"","denied_actions":[{"action":"write_file",...}],...}               exit 0
           stderr: jetski: no output produced — a tool required the "write_file" permission ...
-quota:    {"conversation_id":"<uuid>","status":"ERROR","response":"","error":"Your AI credits balance is too low to continue.",...}   exit 3  (1.3.2)
-          stderr: AGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429) ...","error_code":429,"retryable":true,...}
+quota:    {"conversation_id":"<uuid>","status":"ERROR","response":"","error":"Your AI credits balance is too low to continue.","finished_reason":"error",...}   exit 3  (1.4.12)
+          stderr: error: Your AI credits balance is too low to continue.
+                  AGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429) ...","status":"RESOURCE_EXHAUSTED","error_code":429,"retryable":true,...}
 bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"invalid model selection ...","num_turns":0,...}   exit 1
           stderr: error: invalid model selection ... (+ available list for a bad model)
 ```
 
 - `conversation_id` is the id to store for resume (replaces reading the cache file).
 - A resumed call (`--conversation <uuid>`) returns the same id with `num_turns` incremented.
-- Success = exit 0 **and** `status == "SUCCESS"` **and** non-empty `response` **and** no `denied_actions`.
+- `finished_reason` (since 1.4.11) appears only when a turn ended early: `print_timeout`, `interrupted` or `error`. It is omitted on a normal finish.
+- Success = exit 0 **and** `status == "SUCCESS"` **and** non-empty `response` **and** no `denied_actions` **and** no `finished_reason`.
 
 ## Subcommands
 
 - `agy models` — list available models (no flags).
-- `agy -p "/usage"` — print remaining quota per pool (`Gemini Models` and `Claude and GPT models` with weekly and five-hour limits; `Gemini 4 Argon` with a weekly limit only, 1.4.0) with reset times (UTC when piped). Takes a few seconds.
+- `agy -p "/usage"` — print remaining quota per pool (`Gemini Models` and `Claude and GPT models` with weekly and five-hour limits; `Gemini 4 Argon` with a weekly limit only; same pools on 1.4.12) with reset times (UTC when piped). Takes a few seconds.
 - `agy mcp` — manage MCP servers (add, remove, list, enable, disable).
 - `agy agents` (alias `agent`) — list available agents.
 - `agy mic-serve` — serve this machine's microphone to a CLI on another host (1.4.0; not used).
@@ -58,7 +63,7 @@ bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"
 
 ## Models
 
-`agy models` (this account, agy 1.4.0, 2026-10-16):
+`agy models` (this account, agy 1.4.0, 2026-10-16; unchanged on 1.4.12, 2026-11-02):
 
 ```
 Gemini 4 Argon (High) | (Medium) | (Low)     ← own weekly-only quota pool
