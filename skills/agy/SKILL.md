@@ -16,11 +16,11 @@ Trigger on:
 - second opinions / parallel checks when agy/gemini is named — code, and **non-coding**: "have agy review this email", "see what gemini thinks of this plan", "让 gemini 给第二意见"
 - "continue with agy", "resume with gemini", "/agy resume" — resume the matching conversation (see [Topic-aware sessions](#topic-aware-sessions-this-conversation-only))
 - "use agy to create an image / illustration of X", "have gemini illustrate this" — image generation, **only when agy/gemini is named** (see [Images](#images))
-- **Router dispatch** — Claude decides, per global CLAUDE.md「外部 Worker Router」, to send work to AGY: exploration / root cause / long logs, writing work (docs, Obsidian notes, articles, reports — see [Writing work](#writing-work)), or a review where AGY is the next reviewer in the Writer / Reviewer chain. Exploration, analysis and reviews run on `Gemini 4 Argon (High)`; writing work and images run on `Gemini 3.8 Flash (High)`. The user doesn't have to name agy; the Router is the authority on *when* and *which model*, this skill on *how* to call it.
+- **Router dispatch** — Claude decides, per global CLAUDE.md「外部 Worker Router」, to send work to AGY: prose writing (articles, reports, Obsidian notes — see [Writing work](#writing-work)), a review where AGY is the next reviewer in the Writer / Reviewer chain, or exploration / root cause / long logs and technical docs (skills, runbooks, config docs, README fact/parameter/rule updates) when the Router falls back to AGY — those two default to Codex `gpt-6.1-sol`. Exploration, analysis, reviews and technical docs run on `Gemini 4 Argon (High)`; prose writing and images run on `Gemini 3.8 Flash (High)`. The user doesn't have to name agy; the Router is the authority on *when* and *which model*, this skill on *how* to call it.
 
-**Division of labor:** agy/gemini is the consult and writing path — second opinions, review, research, analysis, prose (docs, notes, articles), images. Flash writes natural, human-sounding prose, which is why writing work goes here. Implementation, bug fixes, code-execution loops and rescue work go to Codex (`codex:rescue`), per global CLAUDE.md's router; agy is not used to change code.
+**Division of labor:** agy/gemini is the consult and writing path — second opinions, review, research, analysis, prose writing (articles, reports, Obsidian notes), images, and exploration and technical docs when the Router falls back to AGY. Flash writes natural, human-sounding prose, which is why prose writing goes to Flash, while technical docs that come to agy go to Argon. Implementation, bug fixes, code-execution loops and rescue work go to Codex (`codex:rescue`), per global CLAUDE.md's router; agy is not used to change code.
 
-**Model:** by role, whether the user says agy, antigravity or gemini — `Gemini 4 Argon (High)` for exploration, analysis, second opinions and reviews; `Gemini 3.8 Flash (High)` for writing work and images (see [Parameters](#parameters--default-and-proceed)). If the user asks for a Claude model or GPT via agy, say the Claude/GPT pool's quota is too small and offer Argon or Flash; GPT work belongs to Codex.
+**Model:** by role, whether the user says agy, antigravity or gemini — `Gemini 4 Argon (High)` for exploration, analysis, second opinions, reviews and technical docs (skills, runbooks, config docs, README fact/parameter/rule updates); `Gemini 3.8 Flash (High)` for prose writing (articles, reports, Obsidian notes) and images (see [Parameters](#parameters--default-and-proceed)). If the user asks for a Claude model or GPT via agy, say the Claude/GPT pool's quota is too small and offer Argon or Flash; GPT work belongs to Codex.
 
 Do NOT trigger for:
 - Anything where the user wants Claude itself to do the work ("you write it", "don't delegate this")
@@ -42,7 +42,7 @@ Diagnose only on an actual failure: if a call comes back "command not found" / n
 
 Unlike codex (`--sandbox read-only`), **`agy` has no usable read-only mode.** Re-verified on agy 1.4.0 (2026-10-16); the auto-deny behavior below re-checked on 1.4.12 (2026-10-31):
 
-- **Without** `--dangerously-skip-permissions`, headless `-p` auto-denies any non-allowlisted tool and the whole call gives up: exit 0, empty `response`, a `denied_actions` list in the JSON, and `jetski: no output produced — a tool required the "write_file" permission…` on stderr. So this skill's calls pass `--dangerously-skip-permissions` — the user-approved compatibility method for headless calls from Claude. With it, `-p` auto-approves everything, including file writes and shell. It is **not isolation**, and it is not a rule for every AGY session: the user's own AGY sessions are unaffected. Whether a restricted allow-list configuration can replace it is unverified.
+- **Without** `--dangerously-skip-permissions`, headless `-p` auto-denies any non-allowlisted tool and the whole call gives up: exit 0, empty `response`, a `denied_actions` list in the JSON, and `jetski: no output produced — a tool required the "write_file" permission…` on stderr. So this skill's calls pass `--dangerously-skip-permissions` — the user-approved compatibility method for headless calls from Claude. With it, `-p` auto-approves file writes and shell (including out-of-workspace reads/writes without hanging on approval prompts since 1.5.2), though commands on the system blocklist and explicit user deny rules are still enforced (since 1.5.2; whether deny rules can block `.env` on this machine is unverified). It is **not isolation**, and it is not a rule for every AGY session: the user's own AGY sessions are unaffected. Whether a restricted allow-list configuration can replace it is unverified.
 - **`--mode plan` is not a read-only switch.** On 1.4.0 with `--dangerously-skip-permissions`, a request to write a workspace file instead produced a plan artifact under `~/.gemini/antigravity-cli/brain/<conversation_id>/` (on 1.3.2 it wrote the workspace file). It still writes, and the behavior has changed between releases — don't use it as isolation.
 - `--sandbox` restricts network and out-of-workspace access but did **not** stop a local file write (verified on an older build) — it is not a read-only switch either.
 
@@ -58,12 +58,12 @@ Pick a model, state it in one line, and run. **An unknown `--model` fails hard**
 
 | Model string (pass verbatim) | Use |
 |---|---|
-| `Gemini 4 Argon (High)` | exploration, root cause, long logs, analysis, second opinions, reviews (default for read-only work; read-only inventory task matched Codex; smoke and resume re-checked on 1.4.0, 2026-10-16) |
-| `Gemini 3.8 Flash (High)` | writing work (docs, Obsidian notes, articles, reports) and images; also read-only work when only the Argon pool is exhausted |
+| `Gemini 4 Argon (High)` | exploration, root cause, long logs, analysis, second opinions, reviews, and technical docs (skills, runbooks, config docs, README fact/parameter/rule updates) (default for read-only work and technical docs; read-only inventory task matched Codex; smoke re-verified on 1.5.3 (2026-11-08), resume on 1.4.0, 2026-10-16) |
+| `Gemini 3.8 Flash (High)` | prose writing (articles, reports, Obsidian notes) and images |
 
-**Only Gemini is used: Argon for read-only work, `Gemini 3.8 Flash (High)` for prose and images** — the only Gemini models `agy models` lists. Argon's prose and image generation are unevaluated, so they stay on Flash. `Claude Sonnet 5.5 (High)`, `Claude Opus 5.5 (High)` and GPT-OSS all sit in the Claude/GPT pool, whose quota is too small, so none of them is used. Don't step down to any of them on a quota error. When `agy models` lists a newer Gemini model, a smoke test is a real call: do it only when the user has given a call budget for it, then update this table and global CLAUDE.md together.
+**Only Gemini is used: Argon for read-only work and technical docs, `Gemini 3.8 Flash (High)` for prose and images** — the only Gemini models `agy models` lists (re-verified on 1.5.3 (2026-11-08)). Argon is used for technical docs (verified 2026-11-08 on an agy skill update); its prose style and image generation are unevaluated, so prose and images stay on Flash. `Claude Sonnet 5.5 (High)`, `Claude Opus 5.5 (High)` and GPT-OSS all sit in the Claude/GPT pool, whose quota is too small, so none of them is used. Don't step down to any of them on a quota error. When `agy models` lists a newer Gemini model, a smoke test is a real call: do it only when the user has given a call budget for it, then update this table and global CLAUDE.md together.
 
-Always pass `--model` explicitly (the built-in default is not pinned and has drifted across releases). The `(Low/Medium/High)` suffix is the reasoning tier — **don't pass `--effort`**: 1.4.0's `--help` lists `low|medium|high|xhigh|max`, but `--model "Gemini 4 Argon (High)" --effort high` still fails with `--effort is not supported for model` (exit 1, verified 1.4.0; re-checked 1.4.12, 2026-10-31). State it in one line: *"Asking agy — Gemini 4 Argon (High)."* Then run.
+Always pass `--model` explicitly (the built-in default is not pinned and has drifted across releases). The `(Low/Medium/High)` suffix is the reasoning tier — **don't pass `--effort`**: `--help` lists `low|medium|high|xhigh|max`, but `--model "Gemini 4 Argon (High)" --effort high` still fails with `invalid model selection (--model "Gemini 4 Argon (High)" --effort "high"): --effort is not supported for model "Gemini 4 Argon (High)"` and `"finished_reason":"error"` (exit 1, re-verified on 1.5.3 (2026-11-08)). State it in one line: *"Asking agy — Gemini 4 Argon (High)."* Then run.
 
 ## Invocation
 
@@ -71,24 +71,24 @@ Always use JSON output, an explicit timeout, and separate stdout/stderr files in
 
 ```bash
 agy --dangerously-skip-permissions --model "Gemini 4 Argon (High)" --output-format json --print-timeout 20m -p "$(cat <scratchpad>/agy/prompt.txt)" > <scratchpad>/agy/out.json 2> <scratchpad>/agy/err.txt
-# writing work / images: same command with --model "Gemini 3.8 Flash (High)"
+# prose writing (articles, reports, Obsidian notes) / images: same command with --model "Gemini 3.8 Flash (High)" (technical docs use Argon)
 ```
 
 - **Prompt in a file.** Write the prompt with the Write tool to `<scratchpad>/agy/prompt.txt` (absolute path; reuse or number the files per call) and pass `-p "$(cat …)"` — inside double quotes the substituted text goes through literally, so quotes, backticks and newlines need no escaping.
 - **Self-contained prompt.** agy can't see this conversation. Include goal, absolute paths, known facts, constraints (the read-only preamble above, or the files it may change), acceptance criteria, and ask it to answer as `STATUS / FINDINGS / RELEVANT_FILES (FILES_CHANGED for edits) / TESTS / RISKS / NEXT_ACTION` with `file:line` evidence, without pasting whole files or logs back.
 - **cwd is agy's workspace.** Run from the project root when agy should read the repo; from an empty scratch dir for consults that need no files. `--add-dir <dir>` (repeatable) adds context; it does **not** restrict writes.
-- **Always pass `--print-timeout`.** In 1.4.0–1.4.12 the default is `0s` = wait forever. Err long, not short: `20m` for normal consults and images, `60m` for broad exploration, reviews and writing work. Always run with `run_in_background` and keep working — you're re-invoked when it exits. A big task may spend its first 10–20 minutes just reading code; long runtime alone is not a reason to call it slow.
-- **Cold start** can take 2–3 minutes the first time in a while (warm calls took 3–50 s in testing). That's normal, not a hang.
+- **Always pass `--print-timeout`.** The default is still `0s` = wait forever (re-verified on 1.5.3 (2026-11-08); since 1.5.0 it waits indefinitely for background tasks to finish instead of hitting the earlier hidden 30-minute cap). Err long, not short: `20m` for normal consults and images, `60m` for broad exploration, reviews and writing work. Always run with `run_in_background` and keep working — you're re-invoked when it exits. A big task may spend its first 10–20 minutes just reading code; long runtime alone is not a reason to call it slow.
+- **Cold start:** the first call in a while may be slower (a cold call on 1.5.3 took ~12 s end-to-end, warm calls 3–50 s; 1.5.3 also retries when the model takes >60 s to start responding instead of failing with `http2 timeout awaiting response headers`). That's normal, not a hang.
 
 ### Reading the result
 
-`out.json` is a single JSON object (verified on 1.4.12, 2026-11-02):
+`out.json` is a single JSON object (re-verified on 1.5.3 (2026-11-08)):
 
 ```json
 {"conversation_id":"<uuid>","status":"SUCCESS","response":"…","duration_seconds":3.1,"num_turns":1,"usage":{…}}
 ```
 
-Since 1.4.11 a turn that ended early also carries `finished_reason`: `print_timeout` (the `--print-timeout` expired; `response` is partial or empty), `interrupted` (canceled), or `error`. The field is **omitted when the turn finishes normally**.
+Since 1.4.11 a turn that ended early also carries `finished_reason`: `print_timeout` (the `--print-timeout` expired), `interrupted` (canceled), or `error`. The field is **omitted when the turn finishes normally** (re-verified on 1.5.3 (2026-11-08)).
 
 Extract the fields with jq (`/usr/bin/jq`):
 
@@ -97,14 +97,14 @@ jq -r '"status=\(.status) id=\(.conversation_id) finished=\(.finished_reason // 
 jq -r '.response' <scratchpad>/agy/out.json
 ```
 
-A call **succeeded** only when exit 0, `status == "SUCCESS"`, `response` is non-empty, there is no `denied_actions`, and there is **no `finished_reason`**. A timed-out run still exits 0 with `SUCCESS`, so without the last check a cut-off answer passes as complete. Otherwise:
+A call **succeeded** only when exit 0, `status == "SUCCESS"`, `response` is non-empty, there is no `denied_actions`, and there is **no `finished_reason`**. Note that exit 3 is returned for both `--print-timeout` expiry and quota exhaustion — distinguish them by `finished_reason`, `error`, and `AGY_ERROR.status`. Otherwise:
 
 | Symptom | Meaning |
 |---|---|
-| exit 0, `SUCCESS`, `"finished_reason":"print_timeout"`, `response` partial or empty; stderr `[agy] print timeout after … returning partial output` (1.4.12) | `--print-timeout` expired — the answer is incomplete; never use it as a result. See Timeout in [Error handling](#error-handling) |
+| exit 3, `"status":"ERROR"`, `"error":"print timeout after 5s with the turn still in progress; the response is partial"`, `"finished_reason":"print_timeout"`, empty `response`; stderr `[agy] print timeout after 5s with turn in progress; returning partial output` and `AGY_ERROR: {… "status":"DEADLINE_EXCEEDED", "reason":"print_timeout", "retryable":false}` (since 1.5.0; re-verified on 1.5.3 (2026-11-08)) | `--print-timeout` expired — the answer is incomplete; never use it as a result. See Timeout in [Error handling](#error-handling) |
 | exit 0, `SUCCESS`, empty `response`, `denied_actions: [...]` | a tool was auto-denied — `--dangerously-skip-permissions` was missing. Fix the command; this is not a model failure. |
-| exit 3, `"status":"ERROR"`, `"error":"Your AI credits balance is too low to continue."`, `"finished_reason":"error"`; stderr `AGY_ERROR: {… "error_code":429, "status":"RESOURCE_EXHAUSTED" …}` (1.4.12) | quota exhausted for that pool — see [Error handling](#error-handling) |
-| exit 1, `"status":"ERROR"`, empty `conversation_id`, `error` and stderr `invalid model selection …` (1.4.0; older builds printed no JSON) | bad `--model` string or `--effort` passed |
+| exit 3, `"status":"ERROR"`, `"error":"Your AI credits balance is too low to continue."`, `"finished_reason":"error"`; stderr `AGY_ERROR: {… "error_code":429, "status":"RESOURCE_EXHAUSTED" …}` (1.4.12; not re-tested on 1.5.3) | quota exhausted for that pool (distinguish from exit 3 timeout via `finished_reason`, `error`, and `AGY_ERROR.status`) — see [Error handling](#error-handling) |
+| exit 1, `"status":"ERROR"`, empty `conversation_id`, `"finished_reason":"error"`, `error` and stderr `invalid model selection …` (`--effort` re-verified on 1.5.3 (2026-11-08); bad model on 1.4.0; older builds printed no JSON) | bad `--model` string or `--effort` passed |
 | exit 0, empty `out.json` | unknown failure — read `err.txt`; retry **once** only if the parent task's call budget allows, otherwise stop and surface it |
 
 ## Topic-aware sessions (this conversation only)
@@ -135,7 +135,7 @@ The **bridge is a delta, not a re-introduction** — agy still has this conversa
 
 ## Writing work
 
-Docs, Obsidian notes, articles and reports go to agy (Router role "文字工作"), because Flash writes natural, human-sounding prose. Claude plans the piece and checks it; agy writes it.
+Prose writing (articles, reports, Obsidian notes — Router role "文字工作") goes to agy on `Gemini 3.8 Flash (High)`, because Flash writes natural, human-sounding prose; technical docs (skills, runbooks, config docs, README and project-doc fact/parameter/rule updates — Router role "技术文档") default to Codex `gpt-6.1-sol` and come to agy on `Gemini 4 Argon (High)` only as the Router fallback. Claude plans the piece and checks it; agy writes it.
 
 - **Self-contained brief:** audience and purpose, the sources of truth (absolute paths to code, existing notes, the vault's documentation standard), the target location, and what must not be written. For an Obsidian note, tell agy to use its own `obsidian-markdown` skill and read the target vault's standard and neighbouring notes first.
 - **Shape the output:** ask for a length that fits the reader, links to code by path and `file:line` instead of pasting it, and a "待确认" mark for anything it could not verify. Before it concludes that something does not exist or is never used, it should search for every way that thing can be written.
@@ -179,10 +179,10 @@ agy's Gemini models have their own cutoff and limits. Treat its output as a **pe
 
 - **`command not found`** → agy isn't installed; install Antigravity from https://antigravity.google.
 - **Auth / "sign in" error** → agy uses a Google account; have the user run `agy` once interactively to complete sign-in, then retry. Never use API keys.
-- **Quota** (exit 3, `credits balance is too low`, `429` / `RESOURCE_EXHAUSTED`) → don't retry in a loop. Run `agy -p "/usage"` to see which pool is out and when it resets. Check which pool is out: if only `Gemini 4 Argon` is exhausted, read-only work may move to Flash (separate pool); if `Gemini Models` is out, Flash is unavailable and Argon doesn't cover writing work. Never switch to the Claude models in the other pool. Fall back **by role per global CLAUDE.md「外部 Worker Router」** (路由表, Writer / Reviewer, 额度回落与暂停) — that file is the only authority for which worker and model come next; don't use a fallback model listed anywhere else.
+- **Quota** (exit 3 with `"finished_reason":"error"`, `credits balance is too low`, `429` / `RESOURCE_EXHAUSTED` — exit 3 is also returned on `--print-timeout`, so check `finished_reason`, `error`, and `AGY_ERROR.status` to distinguish; quota JSON shape from 1.4.12, not re-tested on 1.5.3) → don't retry in a loop. Run `agy -p "/usage"` to see which pool is out and when it resets. Check which pool is out: Argon and Flash don't stand in for each other — an exhausted `Gemini 4 Argon` pool doesn't move read-only work to Flash, and an exhausted `Gemini Models` pool doesn't move writing work to Argon. Never switch to the Claude models in the other pool. Fall back **by role per global CLAUDE.md「外部 Worker Router」** (路由表, Writer / Reviewer, 额度回落与暂停) — that file is the only authority for which worker and model come next; don't use a fallback model listed anywhere else.
 - **Denied tool** (`denied_actions`, empty `response`) → the command lacked `--dangerously-skip-permissions`; fix and re-run once if the call budget allows.
 - **Other non-zero exit** → surface `err.txt`; ask before retrying. Never silently escalate flags to "make it work."
-- **Timeout** → `--print-timeout` hit: exit 0 and `SUCCESS`, but `"finished_reason":"print_timeout"` and a partial `response`. Discard the partial answer. For broad work, re-run once with `90m` in the background if the call budget allows; if it times out again, narrow the task instead of raising the limit further.
+- **Timeout** → `--print-timeout` hit (since 1.5.0; re-verified on 1.5.3 (2026-11-08)): exit 3, `"status":"ERROR"`, `"finished_reason":"print_timeout"`, `"error":"print timeout after … with the turn still in progress; the response is partial"`, empty `response`, and `AGY_ERROR` with `"status":"DEADLINE_EXCEEDED"` / `"reason":"print_timeout"` / `"retryable":false`. Never use a timed-out run as a result. For broad work, re-run once with `90m` in the background if the call budget allows; if it times out again, narrow the task instead of raising the limit further.
 
 ## Things NOT to do
 
@@ -190,7 +190,7 @@ agy's Gemini models have their own cutoff and limits. Treat its output as a **pe
 - ❌ Don't assume `-p`, `--mode plan` or `--sandbox` is read-only — constrain via the prompt and check `git status`.
 - ❌ Don't drop `--dangerously-skip-permissions` from this skill's calls without a verified replacement — without it any non-allowlisted tool aborts the call with exit 0 and no answer. (It is a compatibility method, not isolation.)
 - ❌ Don't omit `--print-timeout` — the default waits forever.
-- ❌ Don't treat `SUCCESS` alone as success — check `finished_reason` too; a timed-out run returns `SUCCESS` with a partial answer.
+- ❌ Don't treat exit 0 or `SUCCESS` alone as success — require exit 0, `status == "SUCCESS"`, non-empty `response`, no `denied_actions`, and no `finished_reason` (and don't assume exit 3 means quota exhaustion without checking `finished_reason` / `error` / `AGY_ERROR.status`, since `--print-timeout` also exits 3 with `ERROR` and `"finished_reason":"print_timeout"`).
 - ❌ Don't pass `--effort`, or a `--model` string that isn't in `agy models`.
 - ❌ Don't route topic resume by `-c` / `--continue` — resume by the stored `conversation_id`.
 - ❌ Don't hard-code fallback models here — follow the global Router.

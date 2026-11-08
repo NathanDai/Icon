@@ -1,6 +1,6 @@
 # `agy` (Antigravity CLI) reference
 
-Verified against **agy 1.4.0** (2026-10-16): JSON denied/bad-model/bad-effort shapes, resume by id, the permission guard and `--mode plan`. Re-checked on **agy 1.4.12** (2026-11-02): `--help`, `agy models`, `/usage`, JSON success, quota-exhaustion and print-timeout shapes (`finished_reason`, added in 1.4.11). Items not re-run since (images, `--sandbox`) keep the version they were last seen on. agy moves fast — the help is the source of truth at runtime; re-check with `agy --help` if behavior surprises you.
+Verified against **agy 1.4.0** (2026-10-16): JSON denied/bad-model shapes, resume by id, the permission guard and `--mode plan`. Re-checked on **agy 1.4.12** (2026-11-02): `--help`, `/usage`, and the quota-exhaustion shape (`finished_reason`, added in 1.4.11; quota shape not re-tested on 1.5.3). Re-verified on **agy 1.5.3** (2026-11-08): `agy models`, JSON success, `--print-timeout` expiry (exit 3 + `ERROR` since 1.5.0), and `--effort` rejection. Items not re-run since (images, `--sandbox`) keep the version they were last seen on. agy moves fast — the help is the source of truth at runtime; re-check with `agy --help` if behavior surprises you.
 
 ## Top-level flags
 
@@ -14,14 +14,14 @@ Verified against **agy 1.4.0** (2026-10-16): JSON denied/bad-model/bad-effort sh
 | `-c`, `--continue` | Continue the **most recent** conversation. |
 | `--conversation <id>` | Resume a **specific** conversation by its UUID. Cwd-independent — the reliable resume. |
 | `--add-dir <dir>` | Add a directory to the workspace (repeatable). |
-| `--dangerously-skip-permissions` | Auto-approve all tool-permission requests. **Required for headless `-p`** (re-verified 1.4.0): without it, any non-allowlisted tool (e.g. `write_file`) is auto-denied and the whole call gives up with exit 0, empty `response` and a `denied_actions` list. |
-| `--effort <level>` | `--help` lists `low\|medium\|high\|xhigh\|max`, but with a tiered name it fails: `--model "Gemini 4 Argon (High)" --effort high` → `--effort is not supported for model`, exit 1 (1.4.0). Since 1.3.4 a base model name without `--effort` picks the default tier. Keep using the tier in the model name. |
+| `--dangerously-skip-permissions` | Auto-approve tool-permission requests (since 1.5.2, commands on the system blocklist and explicit user deny rules are still enforced, while headless `-p` out-of-workspace reads/writes no longer hang waiting for approval; whether deny rules can block `.env` on this machine is unverified; still not read-only isolation). **Required for headless `-p`** (re-verified 1.4.0): without it, any non-allowlisted tool (e.g. `write_file`) is auto-denied and the whole call gives up with exit 0, empty `response` and a `denied_actions` list. |
+| `--effort <level>` | `--help` lists `low\|medium\|high\|xhigh\|max`, but with a tiered name it fails: `--model "Gemini 4 Argon (High)" --effort high` → `invalid model selection (--model "Gemini 4 Argon (High)" --effort "high"): --effort is not supported for model "Gemini 4 Argon (High)"`, `"finished_reason":"error"`, exit 1 (re-verified on 1.5.3 (2026-11-08)). Since 1.3.4 a base model name without `--effort` picks the default tier. Keep using the tier in the model name. |
 | `--mode <accept-edits\|auto\|plan>` | Execution mode (`auto` added in 1.3.5, untested). **`plan` is not read-only**: on 1.4.0 with `--dangerously-skip-permissions` it answered a write request by writing `implementation_plan.md` under `~/.gemini/antigravity-cli/brain/<conversation_id>/` (1.3.2 wrote the workspace file). |
 | `--output-format <text\|json\|stream-json>` | Print-mode output format. Use **`json`** — see [JSON output](#json-output). |
 | `--input-format`, `--json-schema` | stream-json input; JSON schema for structured final output. Not used by the skill. |
 | `--project`, `--new-project`, `--agent`, `--disable-slash-commands`, `--remote-control` | Project / agent selection and other session options. Not used by the skill. |
 | `--sandbox` | Run with terminal restrictions (network / out-of-workspace). **Not** a read-only mode — local writes still happen. |
-| `--print-timeout <dur>` | Time limit for `-p`. Default **`0s` = no limit** in 1.4.0–1.4.12 (was 5m in older builds) — always pass it (`20m` normal, `60m` broad exploration, reviews, writing). On expiry the run still exits 0 with `SUCCESS` but sets `"finished_reason":"print_timeout"` and returns a partial `response` (1.4.12). |
+| `--print-timeout <dur>` | Time limit for `-p`. Default **`0s` = no limit** (re-verified on 1.5.3 (2026-11-08); since 1.5.0 it waits indefinitely for background tasks to finish instead of hitting the earlier hidden 30m cap; was 5m in older builds) — always pass it (`20m` normal, `60m` broad exploration, reviews, writing). Since 1.5.0, on expiry the run exits 3 with `"status":"ERROR"`, `"error":"print timeout after 5s with the turn still in progress; the response is partial"`, `"finished_reason":"print_timeout"`, empty `response`, and `AGY_ERROR` (`"status":"DEADLINE_EXCEEDED"`, `"reason":"print_timeout"`, `"retryable":false`) on stderr (re-verified on 1.5.3 (2026-11-08)). |
 | `--log-file <path>` | Override the CLI log path (logs default to `~/.gemini/antigravity-cli/log/`). |
 | `--settings <json\|path>` | Settings for this session only, never saved: a JSON object of `settings.json` keys, inline or as a file path (seen in 1.4.12 `--help`). Not used by the skill; whether it can carry a restricted permission allow-list in place of `--dangerously-skip-permissions` is **unverified**. |
 
@@ -30,22 +30,24 @@ Verified against **agy 1.4.0** (2026-10-16): JSON denied/bad-model/bad-effort sh
 `--output-format json` prints **one JSON object on stdout**; diagnostics go to stderr. Verified shapes (1.4.0 unless marked):
 
 ```text
-success:  {"conversation_id":"<uuid>","status":"SUCCESS","response":"正常\n","duration_seconds":5.4,"num_turns":1,"usage":{...}}           exit 0  (1.4.12)
-timeout:  {"conversation_id":"<uuid>","status":"SUCCESS","response":"<partial or empty>","num_turns":1,"finished_reason":"print_timeout",...}   exit 0  (1.4.12)
+success:  {"conversation_id":"<uuid>","status":"SUCCESS","response":"正常\n","duration_seconds":6.6,"num_turns":1,"usage":{...}}           exit 0  (re-verified on 1.5.3 (2026-11-08))
+timeout:  {"conversation_id":"<uuid>","status":"ERROR","response":"","error":"print timeout after 5s with the turn still in progress; the response is partial","duration_seconds":0,"num_turns":1,"usage":{...},"finished_reason":"print_timeout"}   exit 3  (since 1.5.0; re-verified on 1.5.3 (2026-11-08))
           stderr: [agy] print timeout after 5s with turn in progress; returning partial output
+                  error: print timeout after 5s with the turn still in progress; the response is partial
+                  AGY_ERROR: {"short_error":"print timeout after 5s with the turn still in progress; the response is partial","status":"DEADLINE_EXCEEDED","retryable":false,"reason":"print_timeout"}
 denied:   {"conversation_id":"<uuid>","status":"SUCCESS","response":"","denied_actions":[{"action":"write_file",...}],...}               exit 0
           stderr: jetski: no output produced — a tool required the "write_file" permission ...
-quota:    {"conversation_id":"<uuid>","status":"ERROR","response":"","error":"Your AI credits balance is too low to continue.","finished_reason":"error",...}   exit 3  (1.4.12)
+quota:    {"conversation_id":"<uuid>","status":"ERROR","response":"","error":"Your AI credits balance is too low to continue.","finished_reason":"error",...}   exit 3  (1.4.12; not re-tested on 1.5.3)
           stderr: error: Your AI credits balance is too low to continue.
                   AGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429) ...","status":"RESOURCE_EXHAUSTED","error_code":429,"retryable":true,...}
-bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"invalid model selection ...","num_turns":0,...}   exit 1
+bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"invalid model selection (--model \"Gemini 4 Argon (High)\" --effort \"high\"): --effort is not supported for model \"Gemini 4 Argon (High)\"","duration_seconds":0,"num_turns":0,"usage":{...},"finished_reason":"error"}   exit 1  (--effort re-verified on 1.5.3 (2026-11-08); bad model on 1.4.0)
           stderr: error: invalid model selection ... (+ available list for a bad model)
 ```
 
 - `conversation_id` is the id to store for resume (replaces reading the cache file).
 - A resumed call (`--conversation <uuid>`) returns the same id with `num_turns` incremented.
-- `finished_reason` (since 1.4.11) appears only when a turn ended early: `print_timeout`, `interrupted` or `error`. It is omitted on a normal finish.
-- Success = exit 0 **and** `status == "SUCCESS"` **and** non-empty `response` **and** no `denied_actions` **and** no `finished_reason`.
+- `finished_reason` (since 1.4.11) appears only when a turn ended early: `print_timeout`, `interrupted` or `error`. It is omitted on a normal finish (re-verified on 1.5.3 (2026-11-08)).
+- Success = exit 0 **and** `status == "SUCCESS"` **and** non-empty `response` **and** no `denied_actions` **and** no `finished_reason`. Since both `--print-timeout` expiry and quota exhaustion return exit 3 with `status == "ERROR"`, distinguish them by `finished_reason` (`print_timeout` vs `error`), `error` text, and `AGY_ERROR.status` (`DEADLINE_EXCEEDED` vs `RESOURCE_EXHAUSTED` / 429).
 
 ## Subcommands
 
@@ -63,7 +65,7 @@ bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"
 
 ## Models
 
-`agy models` (this account, agy 1.4.0, 2026-10-16; unchanged on 1.4.12, 2026-11-02):
+`agy models` (this account, agy 1.4.0, 2026-10-16; re-verified on 1.5.3 (2026-11-08)):
 
 ```
 Gemini 4 Argon (High) | (Medium) | (Low)     ← own weekly-only quota pool
@@ -90,14 +92,14 @@ GPT-OSS 120B (Medium)
 
 ## Safety / permissions
 
-- **No usable read-only mode.** Re-verified on agy 1.4.0 (2026-10-16): without `--dangerously-skip-permissions`, allowlisted read tools (e.g. `git diff`) still run, but a `write_file` request is auto-denied and the call ends with exit 0 and only `no output produced — a tool required the "write_file" permission…` (no file written, no answer). With the flag, `-p` auto-approves and executes everything — it will create/modify files and run shell if the task leads there. (Older builds, e.g. 1.0.10, wrote files even without the flag.)
+- **No usable read-only mode.** Re-verified on agy 1.4.0 (2026-10-16): without `--dangerously-skip-permissions`, allowlisted read tools (e.g. `git diff`) still run, but a `write_file` request is auto-denied and the call ends with exit 0 and only `no output produced — a tool required the "write_file" permission…` (no file written, no answer). With the flag, `-p` auto-approves file writes and shell (including out-of-workspace reads/writes without hanging on approval prompts since 1.5.2), though commands on the system blocklist and explicit user deny rules are still enforced since 1.5.2 (whether deny rules can block `.env` on this machine is unverified; it is still not read-only isolation). (Older builds, e.g. 1.0.10, wrote files even without the flag.)
 - `--mode plan` is not read-only either: on 1.4.0 with `--dangerously-skip-permissions` it wrote a plan artifact under `~/.gemini/antigravity-cli/brain/<conversation_id>/` instead of the requested workspace file (1.3.2 wrote the workspace file).
 - `--sandbox` (verified on an older build) gates network / full-disk / out-of-workspace operations behind confirmation, but **did not block a local `/tmp` write** — treat it as "restrict escape", not "read-only".
 - For read-only intent, constrain via the **prompt** ("analyze and answer only; don't modify files or run shell") and/or scope the workspace (`--add-dir` / cwd).
 
 ## Gotchas
 
-- **Cold start ~2–3 min** on the first call (language-server spin-up + auth); warm calls took 5–20 s in 1.4.0 testing. `--print-timeout` defaults to no limit — always set it.
+- **First call may be slower** (language-server spin-up + auth; a cold call on 1.5.3 took ~12 s end-to-end, warm calls 5–20 s; 1.5.3 also retries when the model takes >60 s to start responding instead of failing with `http2 timeout awaiting response headers`). `--print-timeout` defaults to no limit (and since 1.5.0 waits indefinitely for background tasks instead of the earlier hidden 30m cap; re-verified on 1.5.3 (2026-11-08)) — always set it.
 - **Non-TTY stdout drop** (old builds) ([antigravity-cli#76](https://github.com/google-antigravity/antigravity-cli/issues/76)): on some builds (v1.0.0 / Windows), `agy -p` can exit 0 with **empty** piped stdout. Not reproduced on macOS 1.0.10, but guard for it: empty output + exit 0 → retry once.
 - **Shared `~/.gemini/` lineage** — agy reuses gemini-cli's config/auth dir (`oauth_creds.json`, `settings.json`, plugins). Per-model settings live in `~/.gemini/antigravity-cli/settings.json` and interactive use can mutate them under a script.
 - **Images**: agy generates images on the Google subscription — no API key or extension. Since 1.2.16 requests go to a built-in `image-generator` subagent (Nano Banana Pro). An explicit absolute output path in the `-p` prompt is honored (verified 1.3.2); very simple shapes may be drawn with code instead of the image model. (The `nanobanana` gemini-cli extension on disk is unregistered and unnecessary — an API-key path you don't need.)

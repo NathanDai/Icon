@@ -21,7 +21,7 @@ description: 由 Claude 主动编排的独立代码审查流程：派 Codex / Gr
 按全局 CLAUDE.md「Writer / Reviewer」选第一个可用的异构 Reviewer，并记下实际用了谁（含模型）。默认模型已写在 `rc.sh` 顶部（Codex `gpt-6.1-sol`，effort 来自 `~/.codex/config.toml`；Grok `grok-4.6`+`high`），一般不必再传。
 
 - 设计取舍、并发、安全、数据正确性等复杂问题，在常规 review 之外加一次挑战审查：Reviewer 是 Codex 时用 `codex-adv`，是 Grok 时用 `grok-critique`。二者通常只选一个。
-- 非高风险的 Fast Path 小改动（几行、能一句话说清 diff）可以不派外部审查；高风险的小改动（数据正确性、安全、并发、金额/单位、生产写入路径）仍按全局 CLAUDE.md 至少派一次独立 review，可不加挑战审查。
+- 非高风险的单点小改动（几行、能一句话说清 diff）由 Claude 验收 diff，可以不派外部审查；高风险的小改动（数据正确性、安全、并发、金额/单位、生产写入路径）仍按全局 CLAUDE.md 至少派一次独立 review，可不加挑战审查。
 
 ## 派发与追踪
 
@@ -40,7 +40,7 @@ RC=~/.claude/skills/review-cycle/scripts/rc.sh
 - "已启动"不是完成。等待是有界的：`waitTimedOut: true` 时最多再等一轮，仍未结束就报告用户（附 id 和最后状态），不自行 cancel/stop，也不对同一 diff 重复派同一 Reviewer。
 - 结束后再比对一次 `git status --porcelain`。审查期间工作区有变化即视为违规：告诉用户，不自动回滚。
 
-额度或可用性错误（429/402/usage limit）按 CLAUDE.md「额度回落与暂停」换到下一个 Reviewer，并在结果里写明换了谁、为什么。
+额度或可用性错误（429/402/usage limit）按 CLAUDE.md「验收与状态」的额度回落规则（细节见 ~/.claude/agent-orchestration-patterns.md 第 7 节）换到下一个 Reviewer，并在结果里写明换了谁、为什么。
 
 ## 核实与分级
 
