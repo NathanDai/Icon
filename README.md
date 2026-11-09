@@ -10,17 +10,17 @@
 
 | 图标文件 | 预览 | 在线直链 | 说明 |
 | :--- | :---: | :--- | :--- |
-| `air_icon.png` | ![air_icon](air_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/air_icon.png` | MacBook Air (m1) 图标 |
-| `mini1_icon.png` | ![mini1_icon](mini1_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/mini1_icon.png` | Mac Mini (m1) 图标 |
-| `mini2_icon.png` | ![mini2_icon](mini2_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/mini2_icon.png` | Mac Mini (m2) 图标 |
-| `nuc_icon.png` | ![nuc_icon](nuc_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/nuc_icon.png` | NUC i3 Ubuntu 小主机图标 |
-| `nuc_i9_icon.png` | ![nuc_i9_icon](nuc_i9_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/nuc_i9_icon.png` | NUC i9 Extreme 小主机图标 |
-| `finch1_icon.png` | ![finch1_icon](finch1_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch1_icon.png` | Finch 头像 1 |
-| `finch2_icon.png` | ![finch2_icon](finch2_icon.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_icon.png` | Finch 头像 2 |
-| `finch1_avatar.png` | ![finch1_avatar](finch1_avatar.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch1_avatar.png` | Finch 头像 1（avatar 版本） |
-| `finch2_avatar.png` | ![finch2_avatar](finch2_avatar.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_avatar.png` | Finch 头像 2（avatar 版本） |
-| `finch2_avatar_refined.png` | ![finch2_avatar_refined](finch2_avatar_refined.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_avatar_refined.png` | Finch 头像 2（refined 版本） |
-| `vlcsnap.png` | ![vlcsnap](vlcsnap.png) | `https://raw.githubusercontent.com/NathanDai/Icon/main/vlcsnap.png` | 图片资源（200×113） |
+| `air_icon.png` | <img src="air_icon.png" alt="air_icon" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/air_icon.png) | MacBook Air (m1) 图标 |
+| `mini1_icon.png` | <img src="mini1_icon.png" alt="mini1_icon" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/mini1_icon.png) | Mac Mini (m1) 图标 |
+| `mini2_icon.png` | <img src="mini2_icon.png" alt="mini2_icon" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/mini2_icon.png) | Mac Mini (m2) 图标 |
+| `nuc_icon.png` | <img src="nuc_icon.png" alt="nuc_icon" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/nuc_icon.png) | NUC i3 Ubuntu 小主机图标 |
+| `nuc_i9_icon.png` | <img src="nuc_i9_icon.png" alt="nuc_i9_icon" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/nuc_i9_icon.png) | NUC i9 Extreme 小主机图标 |
+| `finch1_icon.png` | <img src="finch1_icon.png" alt="finch1_icon" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/finch1_icon.png) | Finch 头像 1 |
+| `finch2_icon.png` | <img src="finch2_icon.png" alt="finch2_icon" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_icon.png) | Finch 头像 2 |
+| `finch1_avatar.png` | <img src="finch1_avatar.png" alt="finch1_avatar" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/finch1_avatar.png) | Finch 头像 1（avatar 版本） |
+| `finch2_avatar.png` | <img src="finch2_avatar.png" alt="finch2_avatar" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_avatar.png) | Finch 头像 2（avatar 版本） |
+| `finch2_avatar_refined.png` | <img src="finch2_avatar_refined.png" alt="finch2_avatar_refined" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/finch2_avatar_refined.png) | Finch 头像 2（refined 版本） |
+| `vlcsnap.png` | <img src="vlcsnap.png" alt="vlcsnap" width="200"> | [原图](https://raw.githubusercontent.com/NathanDai/Icon/main/vlcsnap.png) | 图片资源（200×113） |
 
 ### Quantumult 图标
 
