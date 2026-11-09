@@ -6,4 +6,8 @@ payload:
   - DOMAIN,persistent.oaistatic.com
   - DOMAIN,registry.npmjs.org
   - DOMAIN,downloads.cursor.com
+  - IP-CIDR,69.63.215.59/32,no-resolve
+  - IP-CIDR,198.181.36.55/32,no-resolve
+  - IP-CIDR,45.62.113.25/32,no-resolve
+  - IP-CIDR,212.50.248.88/32,no-resolve
 
