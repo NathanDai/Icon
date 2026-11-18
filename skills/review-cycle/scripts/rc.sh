@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # 默认审查模型与全局 CLAUDE.md 路由表一致；改路由表时同步这两行。
-CODEX_REVIEW_MODEL="${RC_CODEX_MODEL:-gpt-6.1-sol}"
+CODEX_REVIEW_MODEL="${RC_CODEX_MODEL:-gpt-6.2-sol}"
 GROK_REVIEW_MODEL="${RC_GROK_MODEL:-grok-4.6}"
 GROK_REVIEW_EFFORT="${RC_GROK_EFFORT:-high}"
 

@@ -105,4 +105,6 @@ RISKS:
 NEXT_ACTION:
 ```
 
+review / critique 的 `FINDINGS` 按缺陷本身影响定级，不因现网暂未触发而降低严重度。单独写明暴露程度（现网能否触发、是否只有手工入口及触发条件）。是否因暴露程度低而降级由 Commander 裁决。
+
 `STATUS` 的 `FAILED` 指本次尝试失败，`BLOCKED` 指缺权限、信息或依赖而停下；两者都由 Commander 用同一 `TASK_ID` 增加 `ATTEMPT` 重试，任务是否最终放弃由 Commander 决定。`BRIDGE_JOB_ID` 对应 Commander 那边的 job/run id。`FILES_CHANGED` 在只读任务里为空，也可以改写为 `RELEVANT_FILES` 列出相关文件。`TESTS` 写实际命令、退出码、日志路径和哈希；没跑就写未跑。进程结束、审查无发现和自己的断言都不是最终验收。完整日志留在文件里，不回贴完整日志。
