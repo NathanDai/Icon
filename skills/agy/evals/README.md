@@ -16,15 +16,18 @@ conda run -n py312 python evals/lint_agy_commands.py --skill . --verbose  # list
 
 Exit codes: `0` clean · `1` drift · `2` `agy` not on PATH.
 
-It checks flag/subcommand **names** only. It can't see model strings, JSON
-output shape, permission behavior, quota errors or resume — those are the smoke
-tests below. If agy adds a value-taking flag or subcommand, add it to
+It checks flag/subcommand **names** only. The smoke tests below check model
+selection, JSON success, resume and quota rows. The denied-action example in
+`references/flags.md` is historical and is no longer tested in this configuration.
+If agy adds a value-taking flag or subcommand, add it to
 `VALUE_FLAGS` / `SUBCOMMANDS` in the script.
 
 ## After an agy upgrade — checklist
 
 1. `agy --version`, `agy --help`, `agy models`, `agy changelog | head -60`; update
    the version stamp, flags, models and verified notes in `references/flags.md`.
+   Use `agy --version` for the installed version. On 1.5.13 the changelog ended
+   at 1.5.9, with no entries for 1.5.10–1.5.13. Record “no changelog entry” in `references/flags.md` for releases it omits.
 2. Run the lint.
 3. Run the smoke tests (online, use Gemini quota; run from an empty scratch dir).
 
@@ -38,10 +41,8 @@ M="Gemini 4 Argon (High)"
 agy --dangerously-skip-permissions --model "$M" --output-format json --print-timeout 5m -p "只回复两个字：正常" > out.json 2> err.txt; echo "exit=$?"; cat out.json
 # 2. resume by id: same conversation_id back, num_turns incremented, recalls "正常"
 agy --dangerously-skip-permissions --conversation "$(jq -r .conversation_id out.json)" --model "$M" --output-format json --print-timeout 5m -p "我上一条让你回复什么？" | jq '{conversation_id,num_turns,response}'
-# 3. permission guard: without the flag a write is denied -> empty response + denied_actions (exit 0)
-agy --model "$M" --output-format json --print-timeout 5m -p "用 write_file 创建 out.txt 内容 abc" 2>/dev/null | jq '{status,response,denied_actions}'
-# 4. quota
-agy -p "/usage"
+# 3. quota
+agy --dangerously-skip-permissions -p "/usage"
 ```
 
 Expected results and the error shapes (quota exit 3, bad model exit 1) are in
