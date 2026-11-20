@@ -1,6 +1,6 @@
 # `agy` (Antigravity CLI) reference
 
-Re-verified on **agy 1.5.13** (2026-11-20): `agy models`, all 16 non-Claude/GPT smoke calls, JSON success with no `finished_reason`, resume by id, Auto-mode shell with the required permission flag, `--effort high` rejection, the bad-model error, `--print-timeout 5s` expiry and the five `/usage` rows. All three documented commands passed `evals/lint_agy_commands.py` on that version. Historical checks retain their dates: denied actions and `--mode plan` (1.4.0), quota exhaustion (1.4.12), and Auto shell without the flag (1.5.9). Images and `--sandbox` retain their original verification notes below. On 1.5.13, `agy changelog` ended at 1.5.9 (no changelog entries for 1.5.10–1.5.13). Mode and stability notes below come from the 1.5.4–1.5.9 release notes.
+Re-verified on **agy 1.5.13** (2026-11-20): `agy models`, all 16 non-Claude/GPT smoke calls, JSON success with no `finished_reason`, resume by id, image generation, Auto-mode shell with the required permission flag, `--effort high` rejection, the bad-model error, `--print-timeout 5s` expiry and the five `/usage` rows with zero model usage. All three documented commands passed `evals/lint_agy_commands.py` on that version. Historical checks retain their dates: denied actions and `--mode plan` (1.4.0), quota exhaustion (1.4.12), and Auto shell without the flag (1.5.9). `--sandbox` retains its original verification note below. On 1.5.13, `agy changelog` ended at 1.5.9 (no changelog entries for 1.5.10–1.5.13). Mode and stability notes below come from the 1.5.4–1.5.9 release notes.
 
 ## Top-level flags
 
@@ -48,21 +48,21 @@ bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"
 - `conversation_id` is the id to store for resume (replaces reading the cache file).
 - A resumed call (`--conversation <uuid>`) returned the same `conversation_id`, advanced `num_turns` from 1 to 2 and recalled the previous turn on 1.5.13 (2026-11-20).
 - `finished_reason` (since 1.4.11) appears only when a turn ended early: `print_timeout`, `interrupted` or `error`. It is omitted on a normal finish (re-verified on 1.5.13 (2026-11-20)).
-- Success = exit 0 **and** `status == "SUCCESS"` **and** non-empty `response` **and** no `denied_actions` **and** no `finished_reason`. Since both `--print-timeout` expiry and quota exhaustion return exit 3 with `status == "ERROR"`, distinguish them by `finished_reason` (`print_timeout` vs `error`), `error` text, and `AGY_ERROR.status` (`DEADLINE_EXCEEDED` vs `RESOURCE_EXHAUSTED` / 429).
+- Success requires exit 0, `status == "SUCCESS"`, and no `denied_actions` or `finished_reason`. For text, also require a non-empty `response`. For images, verify the saved file as described under Gotchas. Since both `--print-timeout` expiry and quota exhaustion return exit 3 with `status == "ERROR"`, distinguish them by `finished_reason` (`print_timeout` vs `error`), `error` text, and `AGY_ERROR.status` (`DEADLINE_EXCEEDED` vs `RESOURCE_EXHAUSTED` / 429).
 
 ## Subcommands
 
 - `agy models` — list available models, one `model id<TAB>display name` per row (re-verified on 1.5.13 (2026-11-20)).
-- `agy --dangerously-skip-permissions -p "/usage"` — print remaining quota per pool (`Gemini Models` and `Claude and GPT models` with weekly and five-hour limits; `Gemini 4 Argon` with a weekly limit only; five rows re-verified on 1.5.13 (2026-11-20); no separate Hydrogen pool; Hydrogen shares Flash’s `Gemini Models` pool, confirmed by before/after usage checks on 1.5.9 (2026-11-16)) with reset times (UTC when piped). Takes a few seconds.
-- `agy mcp` — manage MCP servers (add, remove, list, enable, disable).
-- `agy agents` (alias `agent`) — list available agents.
-- `agy mic-serve` — serve this machine's microphone to a CLI on another host (1.4.0; not used).
-- `agy remote-control` — manage the remote-control daemon.
-- `agy plugin <cmd>` (alias `plugins`): `list`, `import [gemini|claude]`, `install <target>` (e.g. `name@marketplace`), `uninstall <name>`, `enable <name>`, `disable <name>`, `validate [path]`, `link <mp> <target>`, `help`. (Importing the `nanobanana` extension is optional — agy generates images natively; see Images below.)
-- `agy install` — configure PATH / shell aliases (`--dir`, `--skip-aliases`, `--skip-path`).
+- `agy --dangerously-skip-permissions -p "/usage"` — print remaining quota per pool (`Gemini Models` and `Claude and GPT models` with weekly and five-hour limits; `Gemini 4 Argon` with a weekly limit only; five rows re-verified on 1.5.13 (2026-11-20); no separate Hydrogen pool; Hydrogen shares Flash’s `Gemini Models` pool, confirmed by before/after usage checks on 1.5.9 (2026-11-16)) with reset times (UTC when piped). Takes a few seconds. `/usage` is a built-in query with no model inference (1.5.13 JSON showed `num_turns: 0` and zero tokens in every usage field). It does not count against the model-call budget. The permission flag is still required.
+- `mcp` — manage MCP servers (add, remove, list, enable, disable).
+- `agents` (alias `agent`) — list available agents.
+- `mic-serve` — serve this machine's microphone to a CLI on another host (1.4.0; not used).
+- `remote-control` — manage the remote-control daemon.
+- `plugin <cmd>` (alias `plugins`): `list`, `import [gemini|claude]`, `install <target>` (e.g. `name@marketplace`), `uninstall <name>`, `enable <name>`, `disable <name>`, `validate [path]`, `link <mp> <target>`, `help`. (Importing the `nanobanana` extension is optional — agy generates images natively; see Images below.)
+- `install` — configure PATH / shell aliases (`--dir`, `--skip-aliases`, `--skip-path`).
 - `agy changelog` — release notes.
-- `agy update` — update the CLI.
-- `agy help [subcommand]` — help (subcommands also take `-h`/`--help`).
+- `update` — update the CLI.
+- `help [subcommand]` — help (subcommands also take `-h`/`--help`).
 
 ## Models
 
@@ -97,7 +97,7 @@ GPT-OSS 120B (Medium)
   - `conversations/<UUID>.db` — one SQLite DB per conversation. Ids are standard UUIDs.
   - **`cache/last_conversations.json`** — maps each **workspace dir → its latest conversation UUID**. Rewritten after every `-p` run for that cwd. Keys are real paths (e.g. `/private/tmp/…`). Not a source of identity for a specific call: any `-p` run from that cwd (in any session) overwrites it. Take the id from the call's JSON `conversation_id`; if it is missing, record UNKNOWN.
   - `history.jsonl` — prompt log (no ids).
-- **Resume by id:** `agy --dangerously-skip-permissions --conversation <uuid> -p "<prompt>"` — cwd-independent, the reliable path.
+- **Resume by id:** `agy --dangerously-skip-permissions --conversation <uuid> -p "<prompt>"`. On 1.5.13 (2026-11-20), Flash (High) and Argon (High) both recovered context in the original directory and in a different directory, re-verifying cwd independence. Codex recorded a cross-process context recovery failure on 1.5.9 that did not recur in these 1.5.13 tests. Verify the resumed result against the task.
 - **`-c` / `--continue`** resumes the latest conversation. From the matching workspace it's instant; from a different/empty dir it resorts to agentically grepping transcripts to find one — slow and side-effecty. Prefer `--conversation <uuid>` for topic routing.
 
 ## Safety / permissions
@@ -112,7 +112,7 @@ GPT-OSS 120B (Medium)
 - **First call may be slower** (historical 1.5.3 cold call ~12 s, warm calls 5–20 s). Release notes: 1.5.5 fixed headless `-p` sometimes not exiting after printing a result; shutdown completes within 30 s for that case. Since 1.5.8, stale network connections retry on a fresh connection, and slow responses no longer time out at 60 s when admin settings configure a proxy or custom CA. `--print-timeout` defaults to no limit (since 1.5.0 it waits indefinitely for background tasks; last re-verified on 1.5.3 (2026-11-08)) — always set it.
 - **Non-TTY stdout drop** (old builds) ([antigravity-cli#76](https://github.com/google-antigravity/antigravity-cli/issues/76)): on some builds (v1.0.0 / Windows), print mode (`-p`) can exit 0 with **empty** piped stdout. Not reproduced on macOS 1.0.10, but guard for it: empty output + exit 0 → retry once.
 - **Shared `~/.gemini/` lineage** — agy reuses gemini-cli's config/auth dir (`oauth_creds.json`, `settings.json`, plugins). Per-model settings live in `~/.gemini/antigravity-cli/settings.json` and interactive use can mutate them under a script.
-- **Images**: agy generates images on the Google subscription — no API key or extension. Since 1.2.16 requests go to a built-in `image-generator` subagent (Nano Banana Pro). An explicit absolute output path in the `-p` prompt is honored (verified 1.3.2); very simple shapes may be drawn with code instead of the image model. (The `nanobanana` gemini-cli extension on disk is unregistered and unnecessary — an API-key path you don't need.)
+- **Images**: agy generates images on the Google subscription — no API key or extension. Since 1.2.16 requests go to a built-in `image-generator` subagent (Nano Banana Pro). On 1.5.13 (2026-11-20), Flash (High) generated a PNG illustration at the absolute path requested in the `-p` prompt using the image model. Very simple shapes may be drawn with code instead of the image model. Verify that the target file exists, check its format, and open it to inspect the content. JSON `response` may contain only progress text, so verify the file even when the response omits its path. (The `nanobanana` gemini-cli extension on disk is unregistered and unnecessary — an API-key path you don't need.)
 - **Auth** = free Google account OAuth ("oauth-personal"); the sanctioned successor to gemini-cli's deprecated individual tier. No API key. `/logout` (interactive) signs out.
 - **Quotas** are per pool — `Gemini Models` (Flash) and `Claude and GPT models` with weekly and five-hour limits, `Gemini 4 Argon` with a weekly limit only; check with `agy --dangerously-skip-permissions -p "/usage"`. On exhaustion follow the global Router — don't step down to other agy models.
 

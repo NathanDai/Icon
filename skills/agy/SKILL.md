@@ -36,7 +36,7 @@ Just invoke `agy` directly — assume it's installed. Don't gate the session beh
 
 Diagnose only on an actual failure: if a call comes back "command not found" / not on PATH, stop and tell the user "`agy` not on PATH — install Antigravity from https://antigravity.google, then re-run" (don't fall back to anything else). Auth is a free **Google account** (agy opens a browser, or prints an authorization URL over SSH, on first use) — never write or pass API keys.
 
-**Quota check (optional, fast):** whether `/usage` reaches a model is unverified, so count it as one call against the parent task's call budget and skip it when the budget is 0. `agy --dangerously-skip-permissions -p "/usage"` prints remaining quota and reset times (UTC when piped). Run it before a large job or after a quota error. Five rows (re-verified on 1.5.13 (2026-11-20)): weekly and five-hour limits for `Gemini Models` and `Claude and GPT models`, plus a weekly-only `Gemini 4 Argon` limit. Flash draws from `Gemini Models`, Argon from its own pool; this setup uses only those two. Hydrogen draws from `Gemini Models`, sharing Flash’s pool (agy 1.5.9, 2026-11-16: weekly and five-hour remaining quota each 100%→99%, Argon unchanged at 96%; a subsequent Argon call reduced its own pool to 93%).
+**Quota check (optional, fast).** `/usage` is a built-in query that does not run model inference or count against the model-call budget. On 1.5.13 (2026-11-20), JSON output showed `num_turns: 0` and zero tokens in every usage field. The permission flag is still required. `agy --dangerously-skip-permissions -p "/usage"` prints remaining quota and reset times (UTC when piped). Run it before a large job or after a quota error. Five rows (re-verified on 1.5.13 (2026-11-20)): weekly and five-hour limits for `Gemini Models` and `Claude and GPT models`, plus a weekly-only `Gemini 4 Argon` limit. Flash draws from `Gemini Models`, Argon from its own pool; this setup uses only those two. Hydrogen draws from `Gemini Models`, sharing Flash’s pool (agy 1.5.9, 2026-11-16: weekly and five-hour remaining quota each 100%→99%, Argon unchanged at 96%; a subsequent Argon call reduced its own pool to 93%).
 
 ## Safety — agy acts by default (read this)
 
@@ -97,7 +97,7 @@ jq -r '"status=\(.status) id=\(.conversation_id) finished=\(.finished_reason // 
 jq -r '.response' <scratchpad>/agy/out.json
 ```
 
-A call **succeeded** only when exit 0, `status == "SUCCESS"`, `response` is non-empty, there is no `denied_actions`, and there is **no `finished_reason`**. Note that exit 3 is returned for both `--print-timeout` expiry and quota exhaustion — distinguish them by `finished_reason`, `error`, and `AGY_ERROR.status`. Otherwise:
+A call **succeeded** only when exit 0, `status == "SUCCESS"`, and there is no `denied_actions` or `finished_reason`. For text, also require a non-empty `response`. For images, verify the [saved file](#images). Note that exit 3 is returned for both `--print-timeout` expiry and quota exhaustion — distinguish them by `finished_reason`, `error`, and `AGY_ERROR.status`. Otherwise:
 
 | Symptom | Meaning |
 |---|---|
@@ -129,9 +129,9 @@ agy persists every conversation, so don't treat each call as a blank slate. With
 agy --dangerously-skip-permissions --conversation <stored-uuid> --model "<same model as the conversation>" --output-format json --print-timeout 20m -p "$(cat <scratchpad>/agy/prompt2.txt)" > <scratchpad>/agy/out2.json 2> <scratchpad>/agy/err2.txt
 ```
 
-Resume by the **stored id** — it's cwd-independent (verified on 1.4.0). On 1.5.13 (2026-11-20) the resumed call returned the same `conversation_id`, advanced `num_turns` from 1 to 2 and recalled the previous turn. Don't route by `-c` / `--continue`: it resumes the *latest* conversation, and from a different directory it agentically greps transcripts to find one — slow and side-effecty. If you have no id for the topic, start fresh rather than guess.
+Resume by the **stored id**. On 1.5.13 (2026-11-20), Flash (High) and Argon (High) both recalled the previous turn from the original directory and from a different directory, re-verifying cwd independence first checked on 1.4.0. Each kept the same `conversation_id` and advanced `num_turns` from 1 to 2. Codex recorded a cross-process context recovery failure on 1.5.9 that did not recur in the 1.5.13 tests. Verify the resumed result against the task. Don't route by `-c` / `--continue`: it resumes the *latest* conversation, and from a different directory it agentically greps transcripts to find one — slow and side-effecty. If you have no id for the topic, start fresh rather than guess.
 
-The **bridge is a delta, not a re-introduction** — agy still has this conversation. Prepend a short summary of what changed about *this topic* since agy last saw it, a few raw excerpts where wording matters, and **explicitly flag anything that invalidates agy's earlier take**.
+Use a **delta bridge**. Prepend a short summary of what changed about *this topic* since agy last saw it, include the key facts and a few raw excerpts where wording matters, and **explicitly flag anything that invalidates agy's earlier take**.
 
 ## Writing work
 
@@ -145,7 +145,7 @@ Prose writing (articles, reports, Obsidian notes — Router role "文字工作")
 
 ## Images
 
-agy produces images on the user's Google subscription, with **no API key or extension**. Image requests go to a built-in `image-generator` subagent; an explicit output path in the prompt is honored (verified on 1.3.2). For very simple shapes it may draw the image with code instead of the image model — if you need an illustration, say so in the prompt.
+agy produces images on the user's Google subscription, with **no API key or extension**. On 1.5.13 (2026-11-20), Flash (High) used the built-in `image-generator` subagent to save an illustration to the requested absolute path. For very simple shapes it may draw the image with code instead of the image model — if you need an illustration, say so in the prompt.
 
 **Only on an explicit agy/gemini request** — *"use agy to illustrate this"*, *"have gemini make an image of …"*. A bare *"create an image"* (no tool named) doesn't trigger this skill.
 
@@ -156,7 +156,7 @@ agy produces images on the user's Google subscription, with **no API key or exte
 agy --dangerously-skip-permissions --model "Gemini 3.8 Flash (High)" --output-format json --print-timeout 20m -p "$(cat <scratchpad>/agy/image_prompt.txt)" > <scratchpad>/agy/image.json 2> <scratchpad>/agy/image_err.txt
 ```
 
-**Read the saved PNG** to confirm it matches, show it, and report the path. **Iterating** ("make it warmer", "add a caption") is an edit of the same image — resume that conversation by its stored id and describe the change.
+**Verify the saved image.** Confirm that the target file exists, check its format, and open it to check the content before showing it and reporting the path. JSON `response` may contain only progress text, so verify the file even when the response omits its path. **Iterating** ("make it warmer", "add a caption") is an edit of the same image — resume that conversation by its stored id and describe the change.
 
 ## Output handling
 
