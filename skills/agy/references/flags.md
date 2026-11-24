@@ -52,8 +52,8 @@ bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"
 
 ## Subcommands
 
-- `agy models` — list available models, one `model id<TAB>display name` per row (re-verified on 1.5.13 (2026-11-20)).
-- `agy --dangerously-skip-permissions -p "/usage"` — print remaining quota per pool (`Gemini Models` and `Claude and GPT models` with weekly and five-hour limits; `Gemini 4 Argon` with a weekly limit only; five rows re-verified on 1.5.13 (2026-11-20); no separate Hydrogen pool; Hydrogen shares Flash’s `Gemini Models` pool, confirmed by before/after usage checks on 1.5.9 (2026-11-16)) with reset times (UTC when piped). Takes a few seconds. `/usage` is a built-in query with no model inference (1.5.13 JSON showed `num_turns: 0` and zero tokens in every usage field). It does not count against the model-call budget. The permission flag is still required.
+- `agy models` — list available models, one `model id<TAB>display name` per row (re-verified on 1.5.16 (2026-11-24)).
+- `agy --dangerously-skip-permissions -p "/usage"` — print remaining quota per pool with reset times (UTC when piped). On 1.5.16 (2026-11-24), it returned four rows, with weekly and five-hour limits for `Gemini Models` and `Claude and GPT models`. The weekly-only `Gemini 4 Argon` row observed on 1.5.13 (2026-11-20) is no longer listed. On 1.5.16, Gemini 4 Argon shares the `Gemini Models` pool with Flash, Hydrogen and Carbon (user confirmation, 2026-11-24). Hydrogen shares Flash’s `Gemini Models` pool, confirmed by before/after usage checks on 1.5.9 (2026-11-16). Takes a few seconds. `/usage` is a built-in query with no model inference (1.5.13 JSON showed `num_turns: 0` and zero tokens in every usage field). It does not count against the model-call budget. The permission flag is still required.
 - `mcp` — manage MCP servers (add, remove, list, enable, disable).
 - `agents` (alias `agent`) — list available agents.
 - `mic-serve` — serve this machine's microphone to a CLI on another host (1.4.0; not used).
@@ -66,14 +66,16 @@ bad model/effort: {"conversation_id":"","status":"ERROR","response":"","error":"
 
 ## Models
 
-`agy models` (Google-account login; re-verified on 1.5.13 (2026-11-20)). Each row is `model id<TAB>display name`; summarized display names below:
+`agy models` (Google-account login; re-verified on 1.5.16 (2026-11-24)). Each row is `model id<TAB>display name`; summarized display names below:
 
 ```
 Gemini 4 Neon (High) | (XHigh) | (Medium) | (Low)
-Gemini 4 Argon (High) | (Medium) | (Low)     ← own weekly-only quota pool
+Gemini 4 Carbon (Medium) | (High) | (Low)
+Gemini 4 Argon (High) | (Medium) | (Low)     ← shares the Gemini Models pool on 1.5.16 (user confirmation, 2026-11-24)
 Gemini 4 Hydrogen (Low) | (Medium) | (High) | (XHigh)
 Orchestrator (Neon)                       ← id gemini-pro-orchestrator-neon
-Orchestrator (Argon)                      ← id gemini-pro-orchestrator-g1-pro
+Orchestrator (Carbon)                     ← id gemini-pro-orchestrator
+Orchestrator (Argon)                      ← id gemini-pro-orchestrator-argon
 Gemini 3.8 Flash (High) | (Medium) | (Low)   ← writing and images
 Claude Opus 5.5 (High) | (Medium) | (Low)
 Claude Sonnet 5.5 (High) | (Medium) | (Low)
@@ -82,9 +84,10 @@ GPT-OSS 120B (Medium)
 
 - **Hydrogen:** visible on this Google-account login as of 1.5.9; `Gemini 4 Hydrogen (High)` passed a smoke test (exit 0, `SUCCESS`, response `正常`, ~3.7 s). In a small blind review of four real pre-fix Python files with one known defect each (agy 1.5.9, 2026-11-16), Hydrogen (High) found one defect and partially identified one in ~182 s versus Argon (High)’s three in ~454 s; both missed a TLS certificate-validation defect and used similar tokens (~78k total). Hydrogen shares Flash’s `Gemini Models` pool and remains **excluded from routing**, defaults and fallbacks because it found fewer defects than Argon in this sample and would consume writing quota; further evaluation is the user’s decision. The 1.5.8 release notes name API-key/ADC access; this Google-login observation takes precedence here.
 - **Neon:** 1.5.13 added four Neon tiers and Orchestrator (Neon) to the list. On 2026-11-20 all 16 non-Claude/GPT entries returned `正常` with exit 0, `SUCCESS`, no `denied_actions` and no `finished_reason`. Each smoke call took ~2–10 s by agy’s timer and used ~13k tokens, mostly agy’s system prompt.
-  - **Quota:** `/usage` has no separate Neon row. All three pools showed the same percentages before and after one Neon (High) call. At 1% display precision, the pool is unconfirmed.
+  - **Quota:** On 1.5.13, `/usage` had no separate Neon row. All three pools showed the same percentages before and after one Neon (High) call. At 1% display precision, the pool is unconfirmed.
   - **Blind review:** five real pre-fix files from one repository (two Python, two JS, one Shell), each with one known defect. A hit earned 1 point and a partial hit 0.5. Hydrogen (XHigh) scored 3.5/5 (~295 s, ~86k tokens), Neon (High) 3/5 (~375 s, ~69k), Argon (High) 2.5/5 (~358 s, ~59k) and Neon (XHigh) 2.5/5 (~629 s, ~99k). All four found the same two defects and missed the same one. Treat gaps of 0.5–1 point as noise in this small, single-repository sample. Compared with Neon (High), Neon (XHigh) took ~1.7× as long and used ~1.4× as many tokens for a lower score.
   - **Writing:** on the same 400-character explanation, neither Neon (High) nor Flash (High) fabricated details. Neon’s paragraphs were slightly better structured, but the tight prompt left too little room to distinguish the models or justify changing the writing model. Like Hydrogen, Neon remains **excluded from routing**, defaults and fallbacks. Further evaluation is the user’s decision.
+- **Carbon:** On 1.5.16 (2026-11-24), `Gemini 4 Carbon (High)` passed a smoke test (exit 0, `SUCCESS`, response `正常`, no `denied_actions` or `finished_reason`, ~5.2 s). At 1% display precision, Flash’s `Gemini Models` pool dropped from 83% to 82% weekly and 30% to 29% over five hours, while the Claude/GPT pool was unchanged. Carbon draws from Flash’s writing quota. Carbon and Orchestrator (Carbon) are **excluded from routing**, defaults and fallbacks. The evidence is limited to the Carbon (High) smoke test. Further evaluation is the user’s decision.
 - **Default choice:** always pass `--model` explicitly — `"Gemini 4 Argon (High)"` for read-only work, `"Gemini 3.8 Flash (High)"` for writing and images; on quota errors follow the role-based fallback in global CLAUDE.md (the only authority for fallbacks). Only these two Gemini models are used; `Claude Opus 5.5 (High)`, `Claude Sonnet 5.5 (High)` and GPT-OSS are listed but not used (the Claude/GPT pool's quota is too small), and agy is not used for code changes. `Claude Opus/Sonnet 4.6 (Thinking)` no longer exist (2026-10-03). The built-in default (no `--model`) is not pinned and has drifted across releases. Older Gemini Flash versions from earlier docs no longer exist.
 - `--model` takes the **verbatim display string**, e.g. `--model "Gemini 4 Argon (High)"`. The `(Low/Medium/High)` suffix is a **reasoning-effort tier**, not a separate model.
 - **An unknown `--model` fails hard** — `error: invalid model selection (--model "Gemini 9 Fake (High)" --effort ""): model Gemini 9 Fake (High) is not recognized as a known model or custom model in settings`, exit 1, followed by the `Available models` list (re-verified on 1.5.13 (2026-11-20)). Only pass strings that appear in `agy models`.
@@ -114,7 +117,7 @@ GPT-OSS 120B (Medium)
 - **Shared `~/.gemini/` lineage** — agy reuses gemini-cli's config/auth dir (`oauth_creds.json`, `settings.json`, plugins). Per-model settings live in `~/.gemini/antigravity-cli/settings.json` and interactive use can mutate them under a script.
 - **Images**: agy generates images on the Google subscription — no API key or extension. Since 1.2.16 requests go to a built-in `image-generator` subagent (Nano Banana Pro). On 1.5.13 (2026-11-20), Flash (High) generated a PNG illustration at the absolute path requested in the `-p` prompt using the image model. Very simple shapes may be drawn with code instead of the image model. Verify that the target file exists, check its format, and open it to inspect the content. JSON `response` may contain only progress text, so verify the file even when the response omits its path. (The `nanobanana` gemini-cli extension on disk is unregistered and unnecessary — an API-key path you don't need.)
 - **Auth** = free Google account OAuth ("oauth-personal"); the sanctioned successor to gemini-cli's deprecated individual tier. No API key. `/logout` (interactive) signs out.
-- **Quotas** are per pool — `Gemini Models` (Flash) and `Claude and GPT models` with weekly and five-hour limits, `Gemini 4 Argon` with a weekly limit only; check with `agy --dangerously-skip-permissions -p "/usage"`. On exhaustion follow the global Router — don't step down to other agy models.
+- **Quotas** — on 1.5.16, `agy --dangerously-skip-permissions -p "/usage"` shows weekly and five-hour limits for `Gemini Models` (Argon, Flash, Hydrogen and Carbon, user confirmation on 2026-11-24) and `Claude and GPT models`. If `Gemini Models` is exhausted, both Argon and Flash are unavailable. Under the routing table in global CLAUDE.md, read-only work and technical docs return to Codex, and prose writing waits for quota to reset. Don't step down to other agy models.
 
 ## Docs
 
