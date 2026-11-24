@@ -3,6 +3,7 @@
 # 在线直链: https://raw.githubusercontent.com/NathanDai/Icon/main/clash/rules.yaml
 
 payload:
+  - DOMAIN-SUFFIX,opencode.ai
   - DOMAIN,persistent.oaistatic.com
   - DOMAIN,registry.npmjs.org
   - DOMAIN,downloads.cursor.com
