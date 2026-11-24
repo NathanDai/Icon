@@ -33,7 +33,7 @@
 - 网页读取仅经 shell `curl` 跑通，原生浏览器未跑通。
 - 所测完整模型名加 `--effort` 均在推理前退出 1，Sonnet 组合未单独测。Claude Opus／Sonnet 5.5、GPT-OSS 经 AGY 最小调用成功，仅验证当次基本可用性，沿用现行不使用规则。
 - `/help`、`/quota`、`/credits`、`/model`、`/effort` 正常结构化返回，`num_turns: 0`。`--print-timeout 1ms` 退出 3，返回 `status: ERROR`、`finished_reason: print_timeout`，无有效回答。
-- 既有失败用例中，Flash 跨进程按精确 ID 续聊在同目录和异目录均未恢复测试记忆，另有三次 `generate_image` 调用失败。
+- 较早一轮实测中，Flash 跨进程按精确 ID 续聊未恢复测试记忆，另有三次 `generate_image` 调用失败。后续复测中两项均成功（见上方功能结果表），早期失败仅作历史参考，当前以上表结论为准，仍须逐次核对续聊的业务结果和生成的图片文件。
 - 未测试付费远程资源、Remote Control 对外连接、账户／插件安装变更、生产 MCP、swarm／teamwork、多媒体输入和交互界面。
 - 这组实测的证据入口为本机目录 `/Users/nathan/.codex/tmp/agy-check-2026-11-15-h889fyfc/`，其中 `HANDOVER.md` 记录阶段状态。
 
