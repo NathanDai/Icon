@@ -1,5 +1,7 @@
 # Evals for the `agy` skill
 
+Verified against agy 1.5.16 (2026-11-24).
+
 Developer tooling — not loaded into Claude's context at runtime. Run it after
 editing `SKILL.md` / `references/flags.md` or upgrading agy.
 
@@ -18,7 +20,7 @@ Exit codes: `0` clean · `1` drift · `2` `agy` not on PATH.
 
 It checks flag/subcommand **names** only. The smoke tests below check model
 selection, JSON success, resume and quota rows. The denied-action example in
-`references/flags.md` is historical and is no longer tested in this configuration.
+`references/flags.md` is outside the smoke tests for this configuration.
 If agy adds a value-taking flag or subcommand, add it to
 `VALUE_FLAGS` / `SUBCOMMANDS` in the script.
 
@@ -26,8 +28,8 @@ If agy adds a value-taking flag or subcommand, add it to
 
 1. `agy --version`, `agy --help`, `agy models`, `agy changelog | head -60`; update
    the version stamp, flags, models and verified notes in `references/flags.md`.
-   Use `agy --version` for the installed version. On 1.5.13 the changelog ended
-   at 1.5.9, with no entries for 1.5.10–1.5.13. Record “no changelog entry” in `references/flags.md` for releases it omits.
+   Use `agy --version` for the installed version. Record “no changelog entry”
+   in `references/flags.md` for releases the changelog omits.
 2. Run the lint.
 3. Run the smoke tests (online, use Gemini quota; run from an empty scratch dir).
 
