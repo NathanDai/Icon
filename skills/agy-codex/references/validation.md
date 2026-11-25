@@ -4,10 +4,12 @@
 
 ## 模型可用性
 
-- 本账户的 `agy models` 列出 `Gemini 4 Neon` 与 `Gemini 4 Hydrogen`（High、XHigh、Medium、Low），`Gemini 4 Carbon`（Medium、High、Low），`Gemini 4 Argon` 与 `Gemini 3.8 Flash`（High、Medium、Low），`Claude Opus 5.5` 与 `Claude Sonnet 5.5`（Low、Medium、High），以及 `GPT-OSS 120B (Medium)`。另有 `Orchestrator (Neon)`（`gemini-pro-orchestrator-neon`）、`Orchestrator (Carbon)`（`gemini-pro-orchestrator`）和 `Orchestrator (Argon)`（`gemini-pro-orchestrator-argon`）。
+- 当前只用 `Gemini 4 Neon (High)`（ID `gemini-4-neon-high`），向 `--model` 传显示名，省略 `--effort`。用户 2026-11-25 给出的定位是“介于 Carbon 和 Hydrogen 之间”。
+- 2026-11-25 Neon (High) 冒烟退出 0，`SUCCESS`，回复 `正常`，无 `denied_actions` 或 `finished_reason`，CLI 约 7.2 秒。成文文笔和出图能力未评估。
+- 既有本账户的 `agy models` 列表记录包含 `Gemini 4 Neon` 与 `Gemini 4 Hydrogen`（High、XHigh、Medium、Low），`Gemini 4 Carbon`（Medium、High、Low），`Gemini 4 Argon` 与 `Gemini 3.8 Flash`（High、Medium、Low），`Claude Opus 5.5` 与 `Claude Sonnet 5.5`（Low、Medium、High），以及 `GPT-OSS 120B (Medium)`。另有 `Orchestrator (Neon)`（`gemini-pro-orchestrator-neon`）、`Orchestrator (Carbon)`（`gemini-pro-orchestrator`）和 `Orchestrator (Argon)`（`gemini-pro-orchestrator-argon`）。
 - 既有一组 16 个非 Claude／GPT 模型／档位的最小调用均通过，均带 `--dangerously-skip-permissions`。Neon (High) 与 Argon (High) 均拒绝 `--effort high`，继续通过完整模型名称指定档位。最小调用只验证当次基本可用性。
 - `Gemini 4 Carbon (High)` 的单独最小调用退出 0，`status: SUCCESS`，`response` 正常，无 `denied_actions` 或 `finished_reason`，耗时约 5.2 秒，`total_tokens: 13596`。调用前后 `Gemini Models` 周额度从 83% 降至 82%，5 小时额度从 30% 降至 29%，`Claude and GPT models` 池不变。
-- 本账户的 `/usage` 返回 `Gemini Models` 和 `Claude and GPT models` 两池，均有周额度和 5 小时额度。用户确认（2026-11-24），Argon、Flash、Hydrogen、Carbon 共用 `Gemini Models` 池。Neon 额度池未确认，Orchestrator 归组不作推测。
+- 本账户的 `/usage` 返回 `Gemini Models` 和 `Claude and GPT models` 两池，均有周额度和 5 小时额度。历史记录：用户确认（2026-11-24），Argon、Flash、Hydrogen、Carbon 共用 `Gemini Models` 池。2026-11-25 Neon 冒烟前后，Gemini 周余量均为 77%、5 小时余量均为 100%，Claude/GPT 两项均为 100%。Gemini 5 小时重置时间变动 15 秒，按 1% 显示精度未能确认 Neon 的额度池，Orchestrator 归组不作推测。
 
 ## 功能结果
 
@@ -15,8 +17,8 @@
 
 | 功能 | 方法与结果 | 验收限制 |
 | --- | --- | --- |
-| 跨进程精确 ID 续聊 | Flash (High) 和 Argon (High) 各在目录 A 首轮记住随机校验码，次轮用 `--conversation <首轮 UUID>` 在 A 或空目录 B 查询。四例均准确返回校验码，`conversation_id` 不变，`num_turns` 从 1 到 2，退出 0、`SUCCESS`，无 `finished_reason` 或 `denied_actions`。另有 Neon (High) 同目录续聊成功。 | 同主题可用精确 UUID 加增量 bridge。写明关键事实，并核对本轮业务结果。此处验证的是文本记忆，结构化续聊未重测。 |
-| 图片生成 | 在空目录要求 Flash (High) 用图片模型生成插画，按绝对路径保存后只回复路径。退出 0、`SUCCESS`，无 `finished_reason`。生成的 PNG 为 1376×768，查看确认符合要求且无文字。JSON `response` 只返回中间进度（“I have requested the image generator subagent ... Waiting”）。 | 验收以目标文件存在、格式正确及实际查看内容为准。`response` 可能只有进度文本。 |
+| 跨进程精确 ID 续聊 | 历史实测：Flash (High) 和 Argon (High) 各在目录 A 首轮记住随机校验码，次轮用 `--conversation <首轮 UUID>` 在 A 或空目录 B 查询。四例均准确返回校验码，`conversation_id` 不变，`num_turns` 从 1 到 2，退出 0、`SUCCESS`，无 `finished_reason` 或 `denied_actions`。另有 Neon (High) 同目录续聊成功。 | 同主题可用精确 UUID 加增量 bridge。写明关键事实，并核对本轮业务结果。此处验证的是文本记忆，结构化续聊未重测。 |
+| 图片生成 | 历史实测：在空目录要求 Flash (High) 用图片模型生成插画，按绝对路径保存后只回复路径。退出 0、`SUCCESS`，无 `finished_reason`。生成的 PNG 为 1376×768，查看确认符合要求且无文字。JSON `response` 只返回中间进度（“I have requested the image generator subagent ... Waiting”）。 | 验收以目标文件存在、格式正确及实际查看内容为准。`response` 可能只有进度文本。 |
 | `/usage` | `agy --dangerously-skip-permissions --output-format json -p "/usage"` 返回 `SUCCESS`、空 `conversation_id`、`num_turns: 0`、各项 token 为 0，`command.name` 为 `"usage"`，与 `/quota` 一致。 | 内建查询不触发模型推理，不计入模型调用预算。 |
 
 ## 未重测项目
@@ -33,7 +35,7 @@
 - 网页读取仅经 shell `curl` 跑通，原生浏览器未跑通。
 - 所测完整模型名加 `--effort` 均在推理前退出 1，Sonnet 组合未单独测。Claude Opus／Sonnet 5.5、GPT-OSS 经 AGY 最小调用成功，仅验证当次基本可用性，沿用现行不使用规则。
 - `/help`、`/quota`、`/credits`、`/model`、`/effort` 正常结构化返回，`num_turns: 0`。`--print-timeout 1ms` 退出 3，返回 `status: ERROR`、`finished_reason: print_timeout`，无有效回答。
-- 较早一轮实测中，Flash 跨进程按精确 ID 续聊未恢复测试记忆，另有三次 `generate_image` 调用失败。后续复测中两项均成功（见上方功能结果表），早期失败仅作历史参考，当前以上表结论为准，仍须逐次核对续聊的业务结果和生成的图片文件。
+- 较早一轮实测中，Flash 跨进程按精确 ID 续聊未恢复测试记忆，另有三次 `generate_image` 调用失败。后续复测中两项均成功（见上方功能结果表），这些结果均为 Flash 的历史记录。仍须逐次核对续聊的业务结果和生成的图片文件。
 - 未测试付费远程资源、Remote Control 对外连接、账户／插件安装变更、生产 MCP、swarm／teamwork、多媒体输入和交互界面。
 - 这组实测的证据入口为本机目录 `/Users/nathan/.codex/tmp/agy-check-2026-11-15-h889fyfc/`，其中 `HANDOVER.md` 记录阶段状态。
 

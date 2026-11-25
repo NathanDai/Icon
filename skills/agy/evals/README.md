@@ -35,10 +35,10 @@ If agy adds a value-taking flag or subcommand, add it to
 
 ## Smoke tests (manual)
 
-Use Gemini 4 Argon (High); repeat test 1 with Gemini 3.8 Flash (High), the writing/image model. Each warm call takes seconds; cold start 2–3 min.
+Use Gemini 4 Neon (High) for all tests. Each warm call takes seconds; cold start 2–3 min.
 
 ```bash
-M="Gemini 4 Argon (High)"
+M="Gemini 4 Neon (High)"
 # 1. JSON shape + success
 agy --dangerously-skip-permissions --model "$M" --output-format json --print-timeout 5m -p "只回复两个字：正常" > out.json 2> err.txt; echo "exit=$?"; cat out.json
 # 2. resume by id: same conversation_id back, num_turns incremented, recalls "正常"

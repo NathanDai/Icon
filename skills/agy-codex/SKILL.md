@@ -1,6 +1,6 @@
 ---
 name: agy-codex
-description: Use AGY with Gemini Flash for simple data extraction, checks against explicit rules, and prose writing. Codex handles code, architecture, complex analysis, research, root-cause work, and code review unless the user explicitly requests AGY for that task. Also covers explicit AGY capability tests, version checks, and quota diagnosis. Delegated calls require permission and budget; strict read-only tasks do not launch model calls.
+description: Use AGY with Gemini 4 Neon (High) for simple data extraction, checks against explicit rules, and prose writing. Codex handles code, architecture, complex analysis, research, root-cause work, and code review unless the user explicitly requests AGY for that task. Also covers explicit AGY capability tests, version checks, and quota diagnosis. Delegated calls require permission and budget; strict read-only tasks do not launch model calls.
 ---
 
 核对版本：agy 1.5.16（2026-11-24）
@@ -9,9 +9,9 @@ description: Use AGY with Gemini Flash for simple data extraction, checks agains
 
 ## 适用范围与权限
 
-AGY 是简单任务和写作助手：从给定材料提取字段、整理内容、按 Codex 写明的规则校验，以及撰写、改写、润色文章和报告。上述工作默认使用 `Gemini 3.8 Flash (High)`；Codex 提供材料、规则与格式，并核对原文、关键数值和最终产物。
+AGY 是简单任务和写作助手：从给定材料提取字段、整理内容、按 Codex 写明的规则校验，以及撰写、改写、润色文章和报告。上述工作只使用 `Gemini 4 Neon (High)`；Codex 提供材料、规则与格式，并核对原文、关键数值和最终产物。
 
-代码开发、架构、源码及调用链梳理、复杂数据分析、外部研究、根因排查、代码审查和最终决策由 Codex 自己完成，不因代码量大、上下文长或需要第二意见就交给 AGY。除非用户针对当前任务明确要求，否则不为这些工作使用 Argon、其他 AGY 模型或多代理 workflow。简单校验指对给定材料按明确规则核对，不包括代码正确性、安全性或生产写入决策。
+代码开发、架构、源码及调用链梳理、复杂数据分析、外部研究、根因排查、代码审查和最终决策由 Codex 自己完成，不因代码量大、上下文长或需要第二意见就交给 AGY。除非用户针对当前任务明确要求，否则不为这些工作调用 AGY 或多代理 workflow。获准交给 AGY 的分析、第二意见和审查也只用 Neon。简单校验指对给定材料按明确规则核对，不包括代码正确性、安全性或生产写入决策。
 
 被 Claude 委派时，只有当前 Packet 明确允许调用 AGY，且调用预算、范围和权限都满足，才调用；否则由主线程继续。已生效合同只能补充模型、预算等细则，不单独构成调用授权。每一次真实模型调用（包括冒烟、重试、`--conversation` 续聊）都占用调用预算，预算为 0 时一次都不调用。
 
@@ -23,7 +23,7 @@ AGY 是简单任务和写作助手：从给定材料提取字段、整理内容�
 - `--dangerously-skip-permissions` 仍受系统命令 denylist、显式 deny 规则及企业管理员审查要求限制；headless 模式遇必须审查的越界访问会拒绝，不能将该参数视为无条件放行。
 - 按上游发布说明，eager MCP 工具和 `/browser` Chrome DevTools 工具应遵守 `mcp(server/tool)` deny／ask 规则，终端沙箱网络代理应遵守路径规则。上游说明不代替本任务的隔离验证。
 - Codex 的 trusted 配置只改变执行权限，不构成项目修改、生产写入、提交或推送授权。提示词及 git status 均不是技术隔离。
-- 用户此前已授权 AGY 当前可见的模型和功能；该权限保留，但不改变上面的常规分工。用户针对当前任务明确指定其他模型或功能时，才按要求使用；不绕过 AGY 调用外部模型／Agent，也不因此启动 Claude Code。受派时仍遵守 Packet 的模型、功能、范围和预算限制；不切换认证或开启额外付费来取得不可见模型。
+- 用户此前已授权 AGY 当前可见的模型和功能；该权限保留，但不改变上面的常规分工。专项功能只在用户针对当前任务明确要求时使用，模型统一用 Neon；不绕过 AGY 调用外部模型／Agent，也不因此启动 Claude Code。受派时仍遵守 Packet 的模型、功能、范围和预算限制；不切换认证或开启额外付费来取得不可见模型。
 - 本技能是 Codex 的 AGY 工作流来源；不继承其他代理的身份、路由或回退链。
 
 ## 核对当前 CLI 用法
@@ -38,7 +38,7 @@ AGY 是简单任务和写作助手：从给定材料提取字段、整理内容�
 
 `--settings` 仅覆盖当前会话，接受 JSON 或文件路径。实测通过 `permissions.allow` 限定文件写入路径及 `printf` 命令，文件写入及命令执行成功。会话设置仍须在任务授权内，不得用 `--settings` 替代 `--dangerously-skip-permissions`，也不把 allow 规则或提示词当作完整隔离。
 
-同进程多轮可用 `agy --dangerously-skip-permissions --model "Gemini 3.8 Flash (High)" --input-format stream-json --output-format stream-json --print-timeout 5m`。stdin 每行一个 `{"event":"user","message":{"content":"提示词"}}`，不再传 `-p`。收到本轮 `result` 再提交下一轮，结束时关闭 stdin 并等待退出。两轮记忆测试通过。`result.response` 是本轮内容，`num_turns`、`usage` 和 `duration_seconds` 在同进程会话中累计，不逐轮相加。`/model`、`/quota` 等内建命令另用独立 `-p` 查询，不混入多轮输入。
+同进程多轮可用 `agy --dangerously-skip-permissions --model "Gemini 4 Neon (High)" --input-format stream-json --output-format stream-json --print-timeout 5m`。stdin 每行一个 `{"event":"user","message":{"content":"提示词"}}`，不再传 `-p`。收到本轮 `result` 再提交下一轮，结束时关闭 stdin 并等待退出。既有两轮记忆测试通过。`result.response` 是本轮内容，`num_turns`、`usage` 和 `duration_seconds` 在同进程会话中累计，不逐轮相加。`/model`、`/quota` 等内建命令另用独立 `-p` 查询，不混入多轮输入。
 
 ## 额度与可用性查询
 
@@ -54,8 +54,8 @@ agy --dangerously-skip-permissions --print-timeout 1m --output-format json -p '/
 
 - `/quota` 或 `/usage` 查询额度池、限制名称、剩余百分比和恢复时间。`/quota` 的文本输出用制表符分隔。`/credits` 返回剩余额外 AI Credits。
 - JSON 额度位于 `command.data.groups[].buckets[]`，读取 `remaining_fraction`（乘100为百分比）、`window` 与 `reset_time`，不要解析自然语言 `description` 推算余额。`/usage` 与 `/quota` 返回相同的 `command.name: "usage"`。积分读取 `command.data.remaining_credits`。实测 `/usage` 返回 `SUCCESS`、空 `conversation_id`、`num_turns: 0` 和各项 token 用量为 0，没有可供续聊的会话 ID。
-- 本账户的 `/usage` 返回 `Gemini Models` 与 `Claude and GPT models` 两池，均有周额度和 5 小时额度。用户确认（2026-11-24），Argon、Flash、Hydrogen、Carbon 共用 `Gemini Models` 池。Neon 额度池未确认，Orchestrator 归组不作推测。其他账户、计划或后续归组可能不同，按实际返回的分组报告。分别展示周额度、5 小时额度；某池未返回某个窗口时写“未单列”，不补造数值。所有适用窗口都须有余量才视为配额可用，不能只看周额度。恢复时间中的 `Z` 是 UTC，按用户时区换算并注明时区。
-- 额外 AI Credits 为 0，不表示订阅模型配额全部耗尽。单个模型调用失败时，按错误信息和额度查询结果判断受影响范围。`Gemini Models` 池耗尽时，Argon、Flash、Hydrogen、Carbon 同时无可用订阅配额。额度是查询时快照，不当作永久预算。
+- 本账户的 `/usage` 返回 `Gemini Models` 与 `Claude and GPT models` 两池，均有周额度和 5 小时额度。历史记录：用户确认（2026-11-24），Argon、Flash、Hydrogen、Carbon 共用 `Gemini Models` 池。2026-11-25 Neon 冒烟前后两池余量百分比不变，按 1% 显示精度未能确认 Neon 的额度池，Orchestrator 归组不作推测。其他账户、计划或后续归组可能不同，按实际返回的分组报告。分别展示周额度、5 小时额度；某池未返回某个窗口时写“未单列”，不补造数值。所有适用窗口都须有余量才视为配额可用，不能只看周额度。恢复时间中的 `Z` 是 UTC，按用户时区换算并注明时区。
+- 额外 AI Credits 为 0，不表示订阅模型配额全部耗尽。单个模型调用失败时，按错误信息和额度查询结果判断受影响范围。额度是查询时快照，不当作永久预算。
 - 这些内建查询不触发模型推理，不计入真实模型调用次数。CLI 自身必要的认证/缓存访问仍受当前权限限制。查询不需要发送测试提示词、启动交互式工作区信任流程、修改权限或读取凭据。
 - `agy models` 只列模型名称，不证明有额度或调用成功。用户明确要求实测调用时，才执行最小模型调用并单独记录结果；不要声称模型回答能读取账户余额。
 - 版本不支持这些命令或返回异常格式时，核对本机 `agy --help` / `agy changelog`，报告无法从 CLI 确认的具体项；必要时再用界面作补充并标明来源，不编造新的 quota 子命令。
@@ -63,17 +63,17 @@ agy --dangerously-skip-permissions --print-timeout 1m --output-format json -p '/
 
 ## 模型与调用
 
-- 简单数据提取、按明确规则校验、成文写作：`Gemini 3.8 Flash (High)`。名称与档位按当前 `agy models` 核对，不沿用旧版 Flash 型号。
-- 代码、架构、复杂分析、研究、根因排查和代码审查没有 AGY 默认模型，由 Codex 完成。Flash 结果不可靠或任务变复杂时，Codex 接手，不自动升级到 Argon、切换其他模型或启用 workflow。
-- 其他可见模型保留为用户明确指定时的选项，不因最小调用成功就常规选用。模型列表与当前选择分别用 `agy models`、`agy --dangerously-skip-permissions --print-timeout 1m -p '/model'` 查询；默认 Medium 不代表按 High 运行，真实调用显式传当前列表的完整名称。最小调用只验证当次基本可用性。
-- 本账户的 `agy models` 列出 `Gemini 4 Neon` 与 `Gemini 4 Hydrogen`（High、XHigh、Medium、Low），`Gemini 4 Carbon`（Medium、High、Low），`Gemini 4 Argon` 与 `Gemini 3.8 Flash`（High、Medium、Low），`Claude Opus 5.5` 与 `Claude Sonnet 5.5`（Low、Medium、High），以及 `GPT-OSS 120B (Medium)`。另有 `Orchestrator (Neon)`（`gemini-pro-orchestrator-neon`）、`Orchestrator (Carbon)`（`gemini-pro-orchestrator`）和 `Orchestrator (Argon)`（`gemini-pro-orchestrator-argon`）。可见性受认证与账号影响，不为测试切换认证、读取密钥或启用额外付费。
-- Argon、Flash 实测可通过内建 `/model`／`/effort` 读到正确的 High 档。Argon、Flash、Hydrogen、Opus、GPT-OSS、Orchestrator 的所测完整模型名加 `--effort` 均在推理前退出 1，报 `--effort is not supported`。Neon (High) 和 Argon (High) 实测拒绝 `--effort high`。继续省略 `--effort`，通过完整名称固定档位。`/effort` 的 `adjustable: true` 和帮助中的 `xhigh|max` 不证明某个命令组合可用；先用只读内建查询核对，不以真实模型任务反复试参数。
+- AGY 只用 `Gemini 4 Neon (High)`（ID `gemini-4-neon-high`）。简单数据提取、按明确规则校验、成文写作及获准的图片生成均用 Neon。成文写作首选 Neon，成文文笔和出图能力未评估。用户 2026-11-25 给出的定位是“介于 Carbon 和 Hydrogen 之间”。
+- 代码、架构、复杂分析、研究、根因排查和代码审查没有 AGY 默认模型，由 Codex 完成。Neon 的只读结果不可靠或任务变复杂时，Codex 接手。
+- 不用 `Gemini 4 Argon (High)` 和 `Gemini 3.8 Flash (High)`（用户 2026-11-25 决定停用，改用 Neon）。Hydrogen、Carbon、Orchestrator、Claude 和 GPT-OSS 也不使用。模型列表与当前选择分别用 `agy models`、`agy --dangerously-skip-permissions --print-timeout 1m -p '/model'` 查询。真实调用用 `--model "Gemini 4 Neon (High)"` 显式指定显示名。最小调用只验证当次基本可用性。
+- 既有本账户的 `agy models` 列表记录包含 `Gemini 4 Neon` 与 `Gemini 4 Hydrogen`（High、XHigh、Medium、Low），`Gemini 4 Carbon`（Medium、High、Low），`Gemini 4 Argon` 与 `Gemini 3.8 Flash`（High、Medium、Low），`Claude Opus 5.5` 与 `Claude Sonnet 5.5`（Low、Medium、High），以及 `GPT-OSS 120B (Medium)`。另有 `Orchestrator (Neon)`（`gemini-pro-orchestrator-neon`）、`Orchestrator (Carbon)`（`gemini-pro-orchestrator`）和 `Orchestrator (Argon)`（`gemini-pro-orchestrator-argon`）。可见性受认证与账号影响，不为测试切换认证、读取密钥或启用额外付费。
+- 历史实测中，Argon、Flash 可通过内建 `/model`／`/effort` 读到正确的 High 档。Argon、Flash、Hydrogen、Opus、GPT-OSS、Orchestrator 的所测完整模型名加 `--effort` 均在推理前退出 1，报 `--effort is not supported`。Neon (High) 和 Argon (High) 实测拒绝 `--effort high`。继续省略 `--effort`，通过完整名称固定档位。`/effort` 的 `adjustable: true` 和帮助中的 `xhigh|max` 不证明某个命令组合可用；先用只读内建查询核对，不以真实模型任务反复试参数。
 - 参数以当前 `agy --help` 为准；显式设 `--print-timeout`，普通调用 5m，批量提取或长文写作可按规模调整。冒烟也是真实调用，只在调用预算允许时做。不把 `--mode plan`、`-p` 或 `--sandbox` 当成已验证的只读隔离。
 - AGY 是同步 CLI；长任务使用当前执行工具的后台进程或会话机制，等待对应进程退出。冷启动可能需 2～3 分钟。未设 `--print-timeout`（默认 `0`）时会等待后台任务完成；显式超时会终止尚在运行的任务并退出 `3`，同时输出 `AGY_ERROR` 和 stderr 超时说明。关闭仍可能需要等待，看到结果文字仍须等待退出并验收。
 - 较长提示词在获准的临时目录中准备，避免拼接不可信 shell 文本。例如：
 
 ```bash
-agy --dangerously-skip-permissions --model "Gemini 3.8 Flash (High)" --output-format json --print-timeout 5m -p "$(cat /absolute/path/prompt.txt)" > /absolute/path/out.json 2> /absolute/path/err.txt
+agy --dangerously-skip-permissions --model "Gemini 4 Neon (High)" --output-format json --print-timeout 5m -p "$(cat /absolute/path/prompt.txt)" > /absolute/path/out.json 2> /absolute/path/err.txt
 ```
 
 提取或校验提示词写明材料、字段／规则、输出格式和不确定项的处理方式，要求给出原文位置，不猜测缺失值；简单任务只给必要片段，不让 AGY 自行研究整个项目。只读任务写明：“不得创建、修改或删除项目文件；只允许必要的只读命令；禁止有写入副作用的数据库、SSH、对象存储、通知及其他 MCP 操作。允许 CLI 自身必要的会话缓存。”写作任务另限定可写的文档或草稿路径。普通任务不调用子代理、`run_workflow` 或 swarm；纯文本冒烟进一步禁止所有工具调用。用户明确要求相关功能时，再写明范围、子任务上限、实际模型和产物，不把单次父调用当作全部预算。
@@ -83,7 +83,7 @@ agy --dangerously-skip-permissions --model "Gemini 3.8 Flash (High)" --output-fo
 下列能力仅供用户针对当前任务明确要求时使用，不用于将复杂分析、研究或代码工作常规外派。
 
 - `/swarm <task>`（Preview & Quota Heavy）的协调者可创建、fork 多个独立会话的 worker，每个 worker 都消耗额度并可选择不同模型。普通 AGY 调用不默认启用 swarm；只有任务授权包含多代理且预算覆盖各 worker 时才使用，所有成员仍受本技能的模型路由及任务范围限制，不能将整个 swarm 只记作一次模型调用。
-- `run_workflow` 实测运行两个继承 Flash High 的子代理并成功汇总结果。它运行 Python workflow，可产生后台任务和多个独立会话；使用前核对脚本权限、模型、并发、子代理与重试预算，保留父／子会话 ID、workflow 日志及终态。不因用户授权使用功能就忽略具体任务的写入或调用限制；无法限定模型与预算时不启动。headless 遇到必须批准的操作仍可能被拒。
+- `run_workflow` 历史实测运行两个继承 Flash High 的子代理并成功汇总结果。它运行 Python workflow，可产生后台任务和多个独立会话；使用前核对脚本权限、模型、并发、子代理与重试预算，保留父／子会话 ID、workflow 日志及终态。不因用户授权使用功能就忽略具体任务的写入或调用限制；无法限定模型与预算时不启动。headless 遇到必须批准的操作仍可能被拒。
 - 上游发布说明称，隔离 worktree 会包含 staged、unstaged 和 untracked 改动；这不保证 worker 基于干净提交，也不替代主线程的范围核对。
 - 常规调用使用本地 CLI。`--remote-agent` 仅在任务确需且授权覆盖远程项目、数据访问与执行范围时使用，不作为本地权限失败后的回退。新会话指定远程项目时会预启动环境，打开已恢复会话时会在后台唤醒闲置环境；恢复远程会话同样要先核对资源启动授权。
 - `agy acp` 的 JSON-RPC `initialize` 握手实测通过，返回协议 1，未创建编辑器会话或调用模型；这不证明 ACP 会话恢复、MCP 注入或多媒体输入已可用。
@@ -103,11 +103,11 @@ agy --dangerously-skip-permissions --model "Gemini 3.8 Flash (High)" --output-fo
 ## 续聊、图像与失败处理
 
 - 每次模型任务后，从本次调用的 JSON 输出里取非空 `conversation_id`，记录“主题 → UUID”。没有JSON或未返回非空ID时记UNKNOWN；内建查询不建立会话，不需要此映射。不从 `~/.gemini/antigravity-cli/cache/last_conversations.json` 取（它只记每个目录最近一次会话，会被其他会话的调用覆盖，不能证明是哪一次调用）。
-- Flash (High) 和 Argon (High) 实测跨进程按精确 ID 续聊，在同目录和换目录都恢复成功。同主题可用 `--conversation <uuid>` 传精确 UUID 加增量 bridge，写明关键事实和本轮变化，并验证本轮业务结果。`SUCCESS`、ID 一致和轮数增加仍需结合业务结果判断。同进程 stream-json 多轮仍可选。UUID 缺失时不以 `-c`、`--continue` 或最近会话替代。
-- 仅在用户针对当前任务明确要求 AGY 图像任务或相应功能测试时，使用内置 `image-generator` 子代理，明确绝对输出路径、子代理及生成重试预算，并核对实际日志中的调用方式和内部重试。Flash (High) 实测用图片模型成功生成 PNG，`response` 仅返回中间进度。验收时确认目标文件存在、格式正确并实际查看内容。`response` 是否返回路径不影响图片验收。
+- Neon (High) 实测同目录按精确 ID 续聊成功。历史实测中，Flash (High) 和 Argon (High) 在同目录和换目录都恢复成功。Neon 会话可用 `--conversation <uuid>` 传精确 UUID 加增量 bridge，写明关键事实和本轮变化，并验证本轮业务结果。旧模型会话用增量 bridge 新开 Neon 会话。`SUCCESS`、ID 一致和轮数增加仍需结合业务结果判断。同进程 stream-json 多轮仍可选。UUID 缺失时不以 `-c`、`--continue` 或最近会话替代。
+- 仅在用户针对当前任务明确要求 AGY 图像任务或相应功能测试时，使用内置 `image-generator` 子代理，明确绝对输出路径、子代理及生成重试预算，并核对实际日志中的调用方式和内部重试。Neon 的出图能力未评估。Flash (High) 历史实测用图片模型成功生成 PNG，`response` 仅返回中间进度。验收时确认目标文件存在、格式正确并实际查看内容。`response` 是否返回路径不影响图片验收。
 - 模型任务验收同时检查进程退出码、JSON `status`、`finished_reason` 与任务证据。文本任务核对 `response`，图片任务按上条验收目标文件。正常完成可不带`finished_reason`；`print_timeout`表示超时，退出码为 `3`，回答可能不完整；`interrupted`表示取消，`error`表示失败，均不能当作已完成。保留部分结果、错误输出与精确会话ID，再决定是否需要授权范围内续聊；不因看到部分文字就重新派发同一任务。内建查询另按`command.data`验收。
 - 权限拒绝或无结论按失败处理。headless 工具审批无法取得时可能 soft-deny，进程仍退出 0 并在 stderr 提示被拒工具。保留并核对 stderr、`denied_actions`（如有）和实际任务证据。若发现漏带 `--dangerously-skip-permissions`，补上后在调用预算内重试一次。其他空输出或拒绝仅在问题已消除且预算允许时重试一次，不提升其他权限。
-- 429 或 `credits balance too low` 不循环重试；先用内建查询区分受限额度池与额外积分，同池换模型不能解决该池耗尽。常规 Flash 任务由 Codex 在授权范围内接手，不自动换到 Argon 或其他模型。用户针对当前任务明确要求其他模型时，再核对有效配额；受派任务仍遵守模型、回落和预算限制。不切认证、开启额外消费、绕过 AGY 换入口或擅自安排定时恢复。
+- 429 或 `credits balance too low` 不循环重试；先用内建查询区分受限额度池与额外积分，同池换模型不能解决该池耗尽。Neon 不可用时，只读任务和技术文档由 Codex 在授权范围内接手，成文写作等额度恢复，不换 Codex/Grok。受派任务仍遵守模型、回落和预算限制。不切认证、开启额外消费、绕过 AGY 换入口或擅自安排定时恢复。
 
 ## 官方核对入口
 
